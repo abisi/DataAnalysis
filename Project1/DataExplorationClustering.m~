@@ -46,21 +46,21 @@ figure
 gplotmatrix(spikes(:,selectedFeatures),[],clusterIndexes);
 
 % Plot spike profiles (mean of each cluster)
-cluster1 = zeros(1, sizeFeatureVector);
+cluster1 = [];
 counter1 = 0;
-cluster2 = zeros(1, sizeFeatureVector);;
+cluster2 = [];
 counter2 = 0;
-cluster3 = zeros(1, sizeFeatureVector);;
+cluster3 = [];
 counter3 = 0;
 for i = 1:numberPeaks
     if clusterIndexes(i) == 1
-        cluster1 = cluster1 + spikes(i,:);
+        cluster1 = [cluster1 spikes(i,:)];
         counter1 = counter1+1;
     elseif clusterIndexes(i) == 2
-        cluster2 = cluster2 + spikes(i,:);
+        cluster2 = [cluster2 spikes(i,:)];
         counter2 = counter2+1;
     elseif clusterIndexes(i) == 3
-        cluster3 = cluster3 + spikes(i,:);
+        cluster3 = [cluster3 spikes(i,:)];
         counter3 = counter3+1;
     end
 end
@@ -72,7 +72,7 @@ cluster3 = cluster3 / counter3;
 
 %Let's plot the profiles
 figure
-x_t = [1:sizeFeatureVector];
+x_t = [1:sizeFe];
 plot(x_t,cluster1); hold on
 plot(x_t,cluster2);
 plot(x_t,cluster3); hold off
