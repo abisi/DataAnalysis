@@ -75,6 +75,38 @@ figure
 x_t = [1:sizeFeatureVector];
 plot(x_t,cluster1); hold on
 plot(x_t,cluster2);
-plot(x_t,cluster3); hold off
+plot(x_t,cluster3); hold off 
+% We observe that the profiles are quite different yet could be more differentiated perhaps 
+% yet different enough to justify three diff. neurons
 
 
+%% Hands-on c'd
+
+%Repeating the clustering :
+clusterIndexes2 = kmeans(spikes,k);
+figure
+gplotmatrix(spikes(:,selectedFeatures),[],clusterIndexes2);
+% We observe that colored clusters do not look diff.
+% A reason : ?
+
+%% Let's try for different values of k
+k_alt = [3,4,5,6];
+meanSums = zeros(1,4);
+for i = 1:k_alt
+    [clusterIndexes, centroids, sumD] = kmeans(spikes,k_alt(i));
+    meanSums(i) = mean(sumD);
+    figure
+    gplotmatrix(spikes(:,selectedFeatures),[],clusterIndexes); 
+end
+
+figure
+plot(k_alt, meanSums);
+
+% On average the mean of the sums decreases. Yet with increasing number of clusters, sumD does not allow us to see
+% differences (as it only gives the sum of distances per clusters?) because
+% then the clusters are clearly wrong.
+
+%% Evaluate clustering algorithms and optimal number of 
+% clusters evalclusters based on an internal criterion :
+
+%EVA = evalclusters(spikes, 'kmeans')
