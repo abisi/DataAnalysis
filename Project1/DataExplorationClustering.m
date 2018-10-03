@@ -97,6 +97,9 @@ for i = 1:length(k_alt)
     % Say we form 3 clusters. sumD will be a 3x1 vector. Each line is the
     % distance corresponding to the sum of the squared euclidean distance 
     % between each cluster point and centroid.
+    % Likewise, centroids will be a 3 x 100 matrix. Each line represents a
+    % cluster and the 100 values are the clusters centroid values (we need
+    % a centroid value at each feature).
     meanPointToCentroid(i) = sum(sumD)/numberPeaks;
     % We calculated the average point to centroid distance (irrespective
     % of which cluster appartenance)
@@ -106,7 +109,6 @@ end
 
 figure
 plot(k_alt, meanPointToCentroid);
-figure
 
 % Increasing number of clusters reduces the mean point to centroid
 % distance. However using gplotmatrix to compare spikes at selected
@@ -121,3 +123,19 @@ figure
 
 EVA = evalclusters(spikes, 'kmeans','CalinskiHarabasz','KList',[2:6]);
 EVA2 = evalclusters(spikes, 'kmeans','DaviesBouldin','KList',[2:6]);
+% The Davies-Bouldin Index evaluates intra-cluster similarity and
+% inter-cluster differences.
+
+% These evaluation methods indicate that 2 clusters generate the best
+% results. We see again that internal metrics and statistics do not always
+% yield the best interpretation of data.
+%% evalclustering methods that don't finish -> dataset too large
+EVA3 = evalclusters(spikes, 'kmeans','gap','KList'[2:6]);
+% The gap statistic compares the total within intracluster variation for
+% different values of k with their expected values under null reference
+% distribution of the data, i.e. a distribution with no obvious clustering
+EVA4 = evalclusters(spikes, 'kmeans','silhouette','KList',[2:6]);
+% The Silhouette Index measures the distance between each data point,
+% the centroid of the cluster it was assigned to and the closest centroid
+% belonging to another cluster.
+
