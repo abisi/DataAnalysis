@@ -101,28 +101,30 @@ for i = 1:length(k_alt)
     % cluster and the 100 values are the clusters centroid values (we need
     % a centroid value at each feature).
     meanPointToCentroid(i) = sum(sumD)/numberPeaks;
-    % We calculated the average point to centroid distance (irrespective
+    % We calculated the average point-to-centroid distance (irrespective
     % of which cluster appartenance)
     figure
     gplotmatrix(spikes(:,selectedFeatures),[],clusterIndexes); 
 end
 
 figure
-plot(k_alt, meanPointToCentroid);
+plot(k_alt, meanPointToCentroid, '*');
 
 % Increasing number of clusters reduces the mean point to centroid
 % distance. However using gplotmatrix to compare spikes at selected
 % features shows that adding too many new clusters causes overlapping with
 % pre-existing ones. -> The mean distance metric alone is not sufficient to
-% determine number of clusters.
-% According to us, the optimal number of clusters is 3.
+% determine number of clusters since no clusters become distinctly apparent. 
+% According to us, the optimal number of clusters is 3 : k value where we
+% have DISTINCT groups of points (i.e. clusters).
 
 %% Use Matlab function evalclusters to determine optimal number of clusters 
 % evalclusters finds optimal number of clusters based on an internal
-% criterion. 
+% criterion
 
 EVA = evalclusters(spikes, 'kmeans','CalinskiHarabasz','KList',[2:6]);
 EVA2 = evalclusters(spikes, 'kmeans','DaviesBouldin','KList',[2:6]);
+
 % The Davies-Bouldin Index evaluates intra-cluster similarity and
 % inter-cluster differences.
 
@@ -139,3 +141,5 @@ EVA4 = evalclusters(spikes, 'kmeans','silhouette','KList',[2:6]);
 % the centroid of the cluster it was assigned to and the closest centroid
 % belonging to another cluster.
 
+%According to those, the optimal k is 2.
+EVA3 = evalclusters(spikes, 'kmeans','Silhouette','KList',[2:6])
