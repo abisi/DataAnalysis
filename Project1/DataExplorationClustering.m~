@@ -87,28 +87,37 @@ clusterIndexes2 = kmeans(spikes,k);
 figure
 gplotmatrix(spikes(:,selectedFeatures),[],clusterIndexes2);
 % We observe that colored clusters do not look diff.
-% A reason : ?
+% A reason : exactly same algo performed with exactly same parameters
 
 %% Let's try for different values of k
-k_alt = [3,4,5,6];
-meanSums = zeros(1,4);
-for i = 1:k_alt
+k_alt = [2,3,4,5,6];
+meanPointToCentroid = zeros(1,5);
+for i = 1:length(k_alt)
     [clusterIndexes, centroids, sumD] = kmeans(spikes,k_alt(i));
-    meanSums(i) = mean(sumD);
+    % Say we form 3 clusters. sumD will be a 3x1 vector. Each line is the
+    % distance corresponding to the sum of the squared euclidean distance 
+    % between each cluster point and centroid.
+    meanPointToCentroid(i) = sum(sumD)/numberPeaks;
+    % We calculated the average point-to-centroid distance (irrespective
+    % of which cluster appartenance)
     figure
     gplotmatrix(spikes(:,selectedFeatures),[],clusterIndexes); 
-    figure
-    plot(linspace(1,k_alt(i),k_alt(i)), sumD, '*');
 end
 
 figure
-plot(k_alt, meanSums);
+plot(k_alt, meanPointToCentroid, '*');
 
-% On average the mean of the sums decreases. Yet with increasing number of clusters, sumD does not allow us to see
-% differences (as it only gives the sum of distances per clusters?) because
-% then the clusters are clearly wrong.
+% Increasing number of clusters reduces the mean point to centroid
+% distance. However using gplotmatrix to compare spikes at selected
+% features shows that adding too many new clusters causes overlapping with
+% pre-existing ones. -> The mean distance metric alone is not sufficient to
+% determine number of clusters since no clusters become distinctly apparent. 
+% According to us, the optimal number of clusters is 3 : k value where we
+% have DISTINCT groups of points (i.e. clusters).
 
-% Evaluate clustering algorithms and optimal number of 
-% clusters evalclusters based on an internal criterion :
+%% Use Matlab function evalclusters to determine optimal number of clusters 
+% evalclusters finds optimal number of clusters based on an internal
+% criterion
 
-EVA = evalclusters(spikes, kmeans, CRITERION)
+EVA = evalclusters(spikes, 'kmeans','CalinskiHarabasz','KList',[2:6]);
+EVA2 = evalclusters(spikes, 'kmeans','DaviesBouldin','KList',[2:6]);
