@@ -142,3 +142,6 @@ EVA4 = evalclusters(spikes, 'kmeans','silhouette','KList',[2:6])
 % belonging to another cluster.
 
 %According to those, the optimal k is 2.
+
+
+%Test
