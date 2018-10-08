@@ -121,8 +121,8 @@ plot(k_alt, meanPointToCentroid, '*');
 % evalclusters finds optimal number of clusters based on an internal
 % criterion
 
-EVA = evalclusters(spikes, 'kmeans','CalinskiHarabasz','KList',[2:6])
-EVA2 = evalclusters(spikes, 'kmeans','DaviesBouldin','KList',[2:6])
+%EVA = evalclusters(spikes, 'kmeans','CalinskiHarabasz','KList',[2:6])
+%EVA2 = evalclusters(spikes, 'kmeans','DaviesBouldin','KList',[2:6])
 
 % The Davies-Bouldin Index evaluates intra-cluster similarity and
 % inter-cluster differences.
@@ -132,16 +132,16 @@ EVA2 = evalclusters(spikes, 'kmeans','DaviesBouldin','KList',[2:6])
 % yield the best interpretation of data.
 
 %%
-EVA3 = evalclusters(spikes, 'kmeans','gap','KList',[2:6])
+%EVA3 = evalclusters(spikes, 'kmeans','gap','KList',[2:6])
 % The gap statistic compares the total within intracluster variation for
 % different values of k with their expected values under null reference
 % distribution of the data, i.e. a distribution with no obvious clustering
-EVA4 = evalclusters(spikes, 'kmeans','silhouette','KList',[2:6])
+EVA4 = evalclusters(spikes(:,selectedFeatures), 'kmeans','silhouette','KList',[2:6])
 % The Silhouette Index measures the distance between each data point,
 % the centroid of the cluster it was assigned to and the closest centroid
 % belonging to another cluster.
 
-%According to those, the optimal k is 2.
+%According to those, the optimal k is 3.
 
 
 %Test
