@@ -73,3 +73,28 @@ boxplot(trainData(:,720), groupingMatrix, 'Notch', 'on');
 
 %% t-tests
 
+%Sets of Data to be compared
+CorrectClassDataF720=trainData(trainLabels==0,720);
+ErrorClassDataF720=trainData(trainLabels==1,720);
+
+CorrectClassDataF650=trainData(trainLabels==0,650);
+ErrorClassDataF650=trainData(trainLabels==1,650);
+
+%We use ttest2 because data sets under cannot be paired (more data points
+%in correctClassData than ErrorClassData).
+%T-testing confirms what we suspected when looking at confidence interval
+%boxplots.
+
+%Null hypothesis (average of both data sets is equal) can be
+%rejected @f720 at 5% significance lvl. It cannot be rejected for f650.
+
+%p-value (probability of observing the given result, or one more extreme,
+%by chance if the null hypothesis is true) for f720 is extermely low
+%(0.0009). For f650, the p-value is very large (0.4).
+
+%One cannot simply use t-test for any feature. First we need to check that
+%data from respective classes is normally distributed at this feature and
+%that their variance is similar (histogram superposition).
+
+[H_f650,P_f650]=ttest2(CorrectClassDataF650,ErrorClassDataF650);
+[H_f720,P_f720]=ttest2(CorrectClassDataF720,ErrorClassDataF720);
