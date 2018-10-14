@@ -12,8 +12,6 @@ C = categorical(trainLabels',[1 0],{'Error','Correct'});
 %apparaition to theoretical incidence rates : p(error)= 30% , p(correct)=
 %70%.
 histogram(C,'Normalization','probability', 'BarWidth',0.5);
-ylabel('Percentage');
-title('Proportion of correct- and error-related ERPs');
 
 %Examining data distribution for feature 650 in samples with classification
 %'correct'. Same thing for samples with classification 'incorrect'.
@@ -23,9 +21,8 @@ title('Proportion of correct- and error-related ERPs');
 %for establishing the classification.
 figure;
 histogram(trainData(trainLabels == 0,650),50, 'Normalization', 'probability'); hold on
-histogram(trainData(trainLabels == 1,650),50, 'Normalization', 'probability'); hold off
+histogram(trainData(trainLabels == 1,650),50); hold off
 legend('Correct', 'Error');
-title('Normalized distribution of correct and error (feature 650)');
 
 %Same thing, comparing data distribution @ feature 712 with respect to
 %classes.
@@ -33,7 +30,7 @@ figure;
 histogram(trainData(trainLabels == 0,712),50, 'Normalization', 'probability'); hold on
 histogram(trainData(trainLabels == 1,712),50, 'Normalization', 'probability'); hold off
 legend('Correct', 'Error');
-title('Normalized distribution of correct- and error-related ERPs (feature 712)');
+
 
 %% boxplot
 
