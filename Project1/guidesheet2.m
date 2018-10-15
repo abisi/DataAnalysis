@@ -1,25 +1,27 @@
-%LDA/QDA classifiers
+%% LDA/QDA classifiers
 featuresWhole=trainData;
 featuresSubset=trainData(:,1:10:end);
 labels=trainLabels;
 
-%using subset of features
+% Using subset of features:
+%Non-uniform classes
 classifierLin=fitcdiscr(featuresSubset,labels,'DiscrimType','linear');
+%Uniform classes
 classifierLinUnif=fitcdiscr(featuresSubset,labels,'DiscrimType','linear','prior','uniform');
 classifierDiagLin=fitcdiscr(featuresSubset,labels,'DiscrimType','diaglinear','prior','uniform');
-%classifierQuad=fitcdiscr(featuresSubset,labels,'DiscrimType','quadratic');
-%covariance matrix SINGULAR 
+%classifierQuad=fitcdiscr(featuresSubset,labels,'DiscrimType','quadratic'); %covariance matrix SINGULAR 
 classifierDiagQuad=fitcdiscr(featuresSubset,labels,'DiscrimType','diagquadratic','prior','uniform')
 
+%Predictions 
 yhatLin=predict(classifierLin,featuresSubset);
-yhatLinUnif=predict(classifierLinUnif,featuresSubset);
+yhatLinUnif=predict(classifierLinUnif,featuresSubset); %Uniform
 yhatDiagLin=predict(classifierDiagLin,featuresSubset);
 %yhatQuad=predict(classifierQuad,featuresSubset);
 yhatDiagQuad=predict(classifierDiagQuad,featuresSubset);
 
-%LIN
+%Classification error calculations for each classifier:
 correctCounterLin=0;
-correctCounterLinUnif=0;
+correctCounterLinUnif=0; %Uniform
 correctCounterDiagLin=0;
 %correctCounterQuad=0;
 correctCounterDiagQuad=0;
@@ -57,7 +59,7 @@ classificationErrorDiagLin=1-classificationAccuracyDiagLin;
 classificationAccuracyDiagQuad=correctCounterDiagQuad/597;
 classificationErrorDiagQuad=1-classificationAccuracyDiagQuad;
 
-%error typing
+%Error typing
 corrError=0;
 errError=0;
 for i=1:597
@@ -68,13 +70,14 @@ for i=1:597
         end
     end
 end
-%classError
+
+% Class error calculations (linear classifier only):
 numberErr=nnz(trainLabels);
 numberCorr=597-numberErr;
 classError=0.5*(errError/numberErr)+0.5*(corrError/numberCorr);
 
 
-%error typing
+% Error typing
 corrError=0;
 errError=0;
 for i=1:597
@@ -85,9 +88,16 @@ for i=1:597
         end
     end
 end
-%classError
+% Class error calculations (linear classifier only) w/ uniform argument:
 numberErr=nnz(trainLabels);
 numberCorr=597-numberErr;
 classErrorUnif=0.5*(errError/numberErr)+0.5*(corrError/numberCorr);
+
+
+%% Training and testing error
+% From previous section, we're working with : 
+
+
+%% Cross validation for performance estimation
 
 
