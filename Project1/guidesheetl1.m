@@ -189,10 +189,18 @@ end
 numberErr=nnz(trainLabels);
 numberCorr=597-numberErr;
 classError=0.5*(errError/numberErr)+0.5*(corrError/numberCorr);
+classError2=0.33*(errError/numberErr)+0.66*(corrError/numberCorr);
+
 
 %cleanup
 clear correctCounter corrError errError i numberCorr numberErr predicted;
 
 %% Sclaing thresholding method to multiple dimensions
+%We can scale up method by judging data entry at 2 features with distinct
+%thresholds.
+%% scatterplot
+err=scatter(trainData(trainLabels==0,712),trainData(trainLabels==0,720)); hold on;
+corr=scatter(trainData(trainLabels==1,712),trainData(trainLabels==1,720));
+
 
 
