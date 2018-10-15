@@ -1,4 +1,4 @@
-function [error, accur] = classificationError(labels, prediction)
+function [error, accur] = computeClassificationError(labels, prediction)
 %CLASSIFICATIONERROR Computes classification error and accuracy.
 %   Classif. accuracy :  number of correctly classified samples
 %   (regardless of class) over number of total samples.

@@ -120,34 +120,13 @@ errorLin = [trainingError, testingError]
 
 %Diagquadratic
 classifierDiagQuad = fitcdiscr(set1,trainLabels(1:2:end),'DiscrimType','diagquadratic')
-predictionDiagQuad = predict(classifierDiagQuad, set1)
+predictionDiagQuad = predict(classifierLin, set1)
 
-trainingError = classError(predictionDiagQuad, set1);
-testingError = classError(predictionDiagQuad, set2);
-errorDiagQuad = [trainingError, testingError]
-
-%Quadratic
-classifierQuad = fitcdiscr(set1,trainLabels(1:2:end),'DiscrimType','quadratic')
-predictionQuad = predict(classifierQuad, set1)
-
-trainingError = classError(predictionQuad, set1);
-testingError = classError(predictionQuad, set2);
-errorQuad = [trainingError, testingError]
-
-%- Would we still choose the same classifier ? ->
-%- Improvement on training error does not improve testing error as
-%- Can't use quadratic : covariance matrix is SINGULAR i.e. not invertible
-
-%Complexity - number of parameters
-%Diaglinear:
-%Linear:
-%Diagquadratic:
-%Number of training samples:
-%- Are these classifiers robust ?
+trainingError = classError(predictionLin, set1);
+testingError = classError(predictionLin, set2);
+errorLin = [trainingError, testingError]
 
 
-%Again but revert set1 & set2 : training on set 2
-%Notive the performance variability 
 
 
 
