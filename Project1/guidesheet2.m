@@ -136,7 +136,7 @@ errorDiagQuad = [trainingError, testingError]
 %testingError = computeClassError(label2, predictionQuad, ratio);
 %errorQuad = [trainingError, testingError]
 
-%- Would we still choose the same classifier ? -> linear has error = 0
+%- Would we still choose the same classifier ? -> linear has errors ~= 0.03
 %- Improvement on training error does not improve testing error as
 %- Can't use quadratic : covariance matrix is SINGULAR i.e. not invertible
 
