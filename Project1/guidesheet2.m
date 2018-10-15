@@ -97,44 +97,46 @@ classErrorUnif=0.5*(errError/numberErr)+0.5*(corrError/numberCorr);
 %% Training and testing error
 % From previous section, we're working with : class error
 % Divide dataset
-set1 = trainData(1:2:end,:);
-set2 = trainData(2:2:end,:);
+set1 = trainData(1:2:end,1:10:end);
+set2 = trainData(2:2:end,1:10:end);
+label1 = trainLabels(1:2:end);
+label2 = trainLabels(2:2:end);
 
+ratio = 0.33;
+% Comparison train and test errors
+classifierDiagLin = fitcdiscr(set1,label1,'DiscrimType','diaglinear');
+predictionDiagLin = predict(classifierDiagLin, set1);
 
-%Training error and testing error comparison
-classifierDiagLin = fitcdiscr(set1,trainLabels(1:2:end),'DiscrimType','diaglinear')
-predictionDiagLin = predict(classifierDiagLin, set1)
-
-trainingError = classError(predictionDiagLin, set1);
-testingError = classError(predictionDiagLin, set2);
+trainingError = computeClassError(label1, predictionDiagLin, ratio);
+testingError = computeClassError(label2, predictionDiagLin, ratio);
 errorDiagLin = [trainingError, testingError]
 
 %Same with linear, diagquadratic, quadratic
 %Linear
-classifierLin = fitcdiscr(set1,trainLabels(1:2:end),'DiscrimType','linear')
-predictionLin = predict(classifierLin, set1)
+classifierLin = fitcdiscr(set1,label1,'DiscrimType','linear');
+predictionLin = predict(classifierLin, set1);
 
-trainingError = classError(predictionLin, set1);
-testingError = classError(predictionLin, set2);
+trainingError = computeClassError(label1, predictionLin, ratio);
+testingError = computeClassError(label2, predictionLin, ratio);
 errorLin = [trainingError, testingError]
 
 %Diagquadratic
-classifierDiagQuad = fitcdiscr(set1,trainLabels(1:2:end),'DiscrimType','diagquadratic')
-predictionDiagQuad = predict(classifierDiagQuad, set1)
+classifierDiagQuad = fitcdiscr(set1,label1,'DiscrimType','diagquadratic');
+predictionDiagQuad = predict(classifierDiagQuad, set1);
 
-trainingError = classError(predictionDiagQuad, set1);
-testingError = classError(predictionDiagQuad, set2);
+trainingError = computeClassError(label1, predictionDiagQuad, ratio);
+testingError = computeClassError(label2, predictionDiagQuad, ratio);
 errorDiagQuad = [trainingError, testingError]
 
-%Quadratic
-classifierQuad = fitcdiscr(set1,trainLabels(1:2:end),'DiscrimType','quadratic')
-predictionQuad = predict(classifierQuad, set1)
+%Quadratic - isn't supposed to work
+%classifierQuad = fitcdiscr(set1,trainLabels(1:2:end),'DiscrimType','quadratic');
+%predictionQuad = predict(classifierQuad, set1);
 
-trainingError = classError(predictionQuad, set1);
-testingError = classError(predictionQuad, set2);
-errorQuad = [trainingError, testingError]
+%trainingError = computeClassError(label1, predictionQuad, ratio);
+%testingError = computeClassError(label2, predictionQuad, ratio);
+%errorQuad = [trainingError, testingError]
 
-%- Would we still choose the same classifier ? ->
+%- Would we still choose the same classifier ? -> linear has error = 0
 %- Improvement on training error does not improve testing error as
 %- Can't use quadratic : covariance matrix is SINGULAR i.e. not invertible
 
@@ -146,10 +148,8 @@ errorQuad = [trainingError, testingError]
 %- Are these classifiers robust ?
 
 
-%Again but revert set1 & set2 : training on set 2
+%% Again but revert set1 & set2 : training on set 2
 %Notive the performance variability 
-
-
 
 
 

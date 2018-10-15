@@ -11,10 +11,10 @@ function [classError] = computeClassError(labels, prediction, ratio)
 correctClassError = 0;
 errorClassError = 0;
 
-for i=1:length(prediction)
-    if(prediction(i)~=labels(i,1) && labels(i,1) == 0)
+for i=1:length(labels)
+    if(prediction(i)~=labels(i) && labels(i) == 0)
         correctClassError = correctClassError + 1;
-    else if (prediction(i)~=labels(i,1) && labels(i,1)== 1)
+    else if (prediction(i)~=labels(i) && labels(i)== 1)
             errorClassError = errorClassError + 1;
         end
     end

@@ -99,14 +99,16 @@ classErrorUnif=0.5*(errError/numberErr)+0.5*(corrError/numberCorr);
 % Divide dataset
 set1 = trainData(1:2:end,:);
 set2 = trainData(2:2:end,:);
+label1 = trainLabels(1:2:end,:);
+label1 = trainLabels(1:2:end,:);
 
-
+ratio = 0.5;
 %Training error and testing error comparison
 classifierDiagLin = fitcdiscr(set1,trainLabels(1:2:end),'DiscrimType','diaglinear')
 predictionDiagLin = predict(classifierDiagLin, set1)
 
-trainingError = classError(predictionDiagLin, set1);
-testingError = classError(predictionDiagLin, set2);
+trainingError = computeClassError(set1, set1', ratio);
+testingError = computeClassError(predictionDiagLin, set2', ratio);
 errorDiagLin = [trainingError, testingError]
 
 %Same with linear, diagquadratic, quadratic
@@ -114,19 +116,40 @@ errorDiagLin = [trainingError, testingError]
 classifierLin = fitcdiscr(set1,trainLabels(1:2:end),'DiscrimType','linear')
 predictionLin = predict(classifierLin, set1)
 
-trainingError = classError(predictionLin, set1);
-testingError = classError(predictionLin, set2);
+trainingError = computeClassError(predictionLin, set1', ratio);
+testingError = computeClassError(predictionLin, set2', ratio);
 errorLin = [trainingError, testingError]
 
 %Diagquadratic
 classifierDiagQuad = fitcdiscr(set1,trainLabels(1:2:end),'DiscrimType','diagquadratic')
-predictionDiagQuad = predict(classifierLin, set1)
+predictionDiagQuad = predict(classifierDiagQuad, set1)
 
-trainingError = classError(predictionLin, set1);
-testingError = classError(predictionLin, set2);
-errorLin = [trainingError, testingError]
+trainingError = computeClassError(predictionDiagQuad, set1', ratio);
+testingError = computeClassError(predictionDiagQuad, set2', ratio);
+errorDiagQuad = [trainingError, testingError]
+
+%Quadratic
+classifierQuad = fitcdiscr(set1,trainLabels(1:2:end),'DiscrimType','quadratic')
+predictionQuad = predict(classifierQuad, set1)
+
+trainingError = computeClassError(predictionQuad, set1', ratio);
+testingError = computeClassError(predictionQuad, set2', ratio);
+errorQuad = [trainingError, testingError]
+
+%- Would we still choose the same classifier ? ->
+%- Improvement on training error does not improve testing error as
+%- Can't use quadratic : covariance matrix is SINGULAR i.e. not invertible
+
+%Complexity - number of parameters
+%Diaglinear:
+%Linear:
+%Diagquadratic:
+%Number of training samples:
+%- Are these classifiers robust ?
 
 
+%Again but revert set1 & set2 : training on set 2
+%Notive the performance variability 
 
 
 
