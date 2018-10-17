@@ -1,26 +1,22 @@
 %% LDA/QDA classifiers
-%%feature dimentionality
-featuresWhole=trainData;
-featuresSubset=trainData(:,1:10:end);
+%feature dimentionality reduction
+features=trainData(:,1:10:end);
 labels=trainLabels;
 
-% Using subset of features:
-
-%Non-uniform (prior probabilities are empirically determined from labels)
-classifierDiagLin=fitcdiscr(featuresSubset,labels,'DiscrimType','linear');
-
+%Establishing classification models:
+classifierLin=fitcdiscr(features,labels,'DiscrimType','linear');
 %Uniform classes (prior proba are considered equal)
-classifierLinUnif=fitcdiscr(featuresSubset,labels,'DiscrimType','linear','prior','uniform');
-classifierDiagLin=fitcdiscr(featuresSubset,labels,'DiscrimType','diaglinear','prior','uniform');
+classifierLinUnif=fitcdiscr(features,labels,'DiscrimType','linear','prior','uniform');
+classifierDiagLin=fitcdiscr(features,labels,'DiscrimType','diaglinear','prior','uniform');
 %classifierQuad=fitcdiscr(featuresSubset,labels,'DiscrimType','quadratic'); %covariance matrix SINGULAR 
-classifierDiagQuad=fitcdiscr(featuresSubset,labels,'DiscrimType','diagquadratic','prior','uniform')
+classifierDiagQuad=fitcdiscr(features,labels,'DiscrimType','diagquadratic','prior','uniform')
 
-%Predictions 
-yhatLin=predict(classifierDiagLin,featuresSubset);
-yhatLinUnif=predict(classifierLinUnif,featuresSubset); %Uniform
-yhatDiagLin=predict(classifierDiagLin,featuresSubset);
+%Predictions using models
+yhatLin=predict(classifierLin,features);
+yhatLinUnif=predict(classifierLinUnif,features); %Uniform
+yhatDiagLin=predict(classifierDiagLin,features);
 %yhatQuad=predict(classifierQuad,featuresSubset);
-yhatDiagQuad=predict(classifierDiagQuad,featuresSubset);
+yhatDiagQuad=predict(classifierDiagQuad,features);
 
 %Classification error/accuracy calculations for each classifier:
 [errorLin, accurLin] = computeClassificationError(trainLabels, yhatLin);
@@ -37,48 +33,40 @@ yhatDiagQuad=predict(classifierDiagQuad,featuresSubset);
 [classErrorDiagQuad] = computeClassError(trainLabels, yhatDiagQuad, 0.5);
 
 %% Training and testing error
+%clearing previous vars
+clear all;
+load('trainSet.mat');
+load('trainLabels.mat');
+
 % From previous section, we're working with : class error
 % Divide dataset
-set1 = trainData(1:2:end,1:10:end);
-set2 = trainData(2:2:end,1:10:end);
-label1 = trainLabels(1:2:end);
-label2 = trainLabels(2:2:end);
+trainSet = trainData(1:2:end,1:10:end);
+testSet = trainData(2:2:end,1:10:end);
+trainLabels = trainLabels(1:2:end);
+testLabels = trainLabels(2:2:end);
 
 ratio = 0.33;
-% Comparison train and test errors
-classifierDiagLin = fitcdiscr(set1,label1,'DiscrimType','diaglinear');
-predictionDiagLin = predict(classifierDiagLin, set1);
 
-trainingError = computeClassError(label1, predictionDiagLin, ratio);
-testingError = computeClassError(label2, predictionDiagLin, ratio);
-errorDiagLin = [trainingError, testingError]
+% Comparison train and test errors
+classifierDiagLin = fitcdiscr(trainSet,trainLabels,'DiscrimType','diaglinear');
+errorDiagLin = trainTestError( trainSet, trainLabels, testSet, testLabels, classifierDiagLin, ratio );
 
 %Same with linear, diagquadratic, quadratic
 %Linear
-classifierLin = fitcdiscr(set1,label1,'DiscrimType','linear');
-predictionLin = predict(classifierLin, set1);
-
-trainingError = computeClassError(label1, predictionLin, ratio);
-testingError = computeClassError(label2, predictionLin, ratio);
-errorLin = [trainingError, testingError]
+classifierLin = fitcdiscr(trainSet,trainLabels,'DiscrimType','linear');
+errorLin = trainTestError( trainSet, trainLabels, testSet, testLabels, classifierLin, ratio );
 
 %Diagquadratic
-classifierDiagQuad = fitcdiscr(set1,label1,'DiscrimType','diagquadratic');
-predictionDiagQuad = predict(classifierDiagQuad, set1);
-
-trainingError = computeClassError(label1, predictionDiagQuad, ratio);
-testingError = computeClassError(label2, predictionDiagQuad, ratio);
-errorDiagQuad = [trainingError, testingError]
+classifierDiagQuad = fitcdiscr(trainSet,trainLabels,'DiscrimType','diagquadratic');
+errorDiagQuad = trainTestError( trainSet, trainLabels, testSet, testLabels, classifierDiagQuad, ratio );
 
 %Quadratic - isn't supposed to work
-%classifierQuad = fitcdiscr(set1,trainLabels(1:2:end),'DiscrimType','quadratic');
-%predictionQuad = predict(classifierQuad, set1);
 
-%trainingError = computeClassError(label1, predictionQuad, ratio);
-%testingError = computeClassError(label2, predictionQuad, ratio);
-%errorQuad = [trainingError, testingError]
-
+<<<<<<< HEAD
 %- Would we still choose the same classifier ? -> linear has errors ~= 0.03
+=======
+%- Would we still choose the same classifier ?
+>>>>>>> fa277867e75b71ba31a80b0ce2eeedc72ad886aa
 %- Improvement on training error does not improve testing error as
 %- Can't use quadratic : covariance matrix is SINGULAR i.e. not invertible
 
