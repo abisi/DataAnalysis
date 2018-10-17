@@ -25,6 +25,8 @@ figure;
 histogram(trainData(trainLabels == 0,650),50, 'Normalization', 'probability'); hold on
 histogram(trainData(trainLabels == 1,650),50, 'Normalization', 'probability'); hold off
 legend('Correct', 'Error');
+xlabel('Signal amplitude');
+ylabel('Normalized proportion');
 title('Normalized distribution of correct and error (feature 650)');
 
 %Same thing, comparing data distribution @ feature 712 with respect to
@@ -33,6 +35,8 @@ figure;
 histogram(trainData(trainLabels == 0,712),50, 'Normalization', 'probability'); hold on
 histogram(trainData(trainLabels == 1,712),50, 'Normalization', 'probability'); hold off
 legend('Correct', 'Error');
+xlabel('Signal amplitude');
+ylabel('Normalized proportion');
 title('Normalized distribution of correct- and error-related ERPs (feature 712)');
 
 %% boxplot
@@ -54,11 +58,13 @@ figure
 boxplot(trainData(:,650),groupingMatrix);
 %setting x-axis labels
 set(gca,'XTickLabel',{'Correct','Error'});
+title('Feature 650 boxplot for correct- and error-related ERPs');
 
 %boxplot of data distribution @feature 712 with respect to classes
 figure
 boxplot(trainData(:,712), groupingMatrix); 
 set(gca,'XTickLabel',{'Correct','Error'});
+title('Feature 712 boxplot for correct- and error-related ERPs');
 
 %% boxplots with confidence intervals
 
@@ -67,6 +73,8 @@ set(gca,'XTickLabel',{'Correct','Error'});
 %not try and establish the classification based on this feature.
 figure
 boxplot(trainData(:,650),groupingMatrix, 'Notch', 'on'); 
+set(gca,'XTickLabel',{'Correct','Error'});
+title('Feature 612 boxplot for correct- and error-related ERPs');
 
 %confidence intervals for respective means appear distinct. We suspect that
 %classes display significantly different data distributions @feature 712.
@@ -75,7 +83,9 @@ boxplot(trainData(:,650),groupingMatrix, 'Notch', 'on');
 %Note that we still need to check statistical significance of mean
 %difference between classes @ feature 712 using t-testing.
 figure
-boxplot(trainData(:,712), groupingMatrix, 'Notch', 'on'); 
+boxplot(trainData(:,712), groupingMatrix, 'Notch', 'on');
+set(gca,'XTickLabel',{'Correct','Error'});
+title('Feature 712 boxplot for correct- and error-related ERPs');
 
 %% t-tests
 
@@ -208,5 +218,30 @@ clear correctCounter corrError errError i numberCorr numberErr predicted;
 err=scatter(trainData(trainLabels==0,712),trainData(trainLabels==0,720)); hold on;
 corr=scatter(trainData(trainLabels==1,712),trainData(trainLabels==1,720));
 
+%% Plot class error and classification error as a function of threshold values
+%Calculate the class error
+thresholdValues=[0.4:0.05:0.8];
+ratio=0.5;
+classErrorVector=[];
+classificationErrorVector=[];
 
+for t=1:length(thresholdValues)
+    predVector=computePrediction(trainData, 712, thresholdValues(t)); %return a linear vector
+    classError = computeClassError(trainLabels, predVector, ratio);  
+    classErrorVector=[classErrorVector classError];
+    classificationError = computeClassificationError(trainLabels, predVector'); %computeClassificationError takes a cloumn vector as argument
+    classificationErrorVector=[classificationErrorVector classificationError];
+end
+
+figure;
+scatter(thresholdValues, classErrorVector, 10, 'r', 'filled'); 
+xlabel('Threshold');
+ylabel('Class error');
+title('Class error as a function of thresold values');
+
+figure;
+scatter(thresholdValues, classificationErrorVector, 10, 'b', 'filled');
+xlabel('Threshold');
+ylabel('Classification error');
+title('Classification error as a function of threshold values');
 
