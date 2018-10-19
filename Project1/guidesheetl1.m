@@ -192,6 +192,25 @@ predictLabels=(trainData(:,712)>threshVal); %Return logical array
 %We can scale up method by judging data entry at 2 features with distinct
 %thresholds.
 
+%determining optimal threashold for each feature
+determinedThresholds=[];
+ratio=0.5;
+
+for i=1:length(trainData)
+    thresh = computeOptimalThreashold( [0:0.01:1],ratio,i, trainData, trainLabels );
+    determinedThresholds=[determinedThresholds thresh];
+end
+%% break to disable threasholds recalculation
+
+predicted=[];
+
+%predicting
+for i=1:597
+     newPrediction = mrPredictor( determinedThresholds, trainData(i,:));
+     predicted=[predicted newPrediction];
+end
+
+    
 %% Plot class error and classification error as a function of threshold values
 %Calculate the class error
 thresholdValues=[0.4:0.01:0.8];
@@ -221,6 +240,8 @@ title('Classification error as a function of threshold values');
 
 [classErrorMin, indexMin]=min(classErrorVector)
 bestThreshold=thresholdValues(indexMin)
+
+test = computeOptimalThreashold( thresholdValues,ratio,712, trainData, trainLabels )
 
 %% SUBMISSION
 testD=zeros(1,199);
