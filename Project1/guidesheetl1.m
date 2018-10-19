@@ -163,6 +163,9 @@ set(threshold,'LineWidth',4,'color','red');
 % We conclude that the shortcoming of feature thresholding is that we
 % cannot establish a universal threashold that holds for any feature within
 % our data.
+%% scatterplot
+err=scatter(trainData(trainLabels==0,712),trainData(trainLabels==0,720)); hold on;
+corr=scatter(trainData(trainLabels==1,712),trainData(trainLabels==1,720));
 %% classification error
 close all;
 clear all;
@@ -171,55 +174,23 @@ load('trainLabels.mat');
 
 threshVal=0.64;
 %predicting
-predicted=[];
-for i=1:597
-    if(trainData(i,712)>0.64)
-        predicted(i)=1;
-    else
-        predicted(i)=0;
-    end
-end
-%comparing predicted to labels
-correctCounter=0;
-for i=1:597
-    if(predicted(1,i)==trainLabels(i,1))
-        correctCounter=correctCounter+1;
-    end
-end
-%classification accuracy
-classificationAccuracy=correctCounter/597;
-%classification error
-classificationError=1-classificationAccuracy;
-%error typing
-corrError=0;
-errError=0;
-for i=1:597
-    if(predicted(1,i)~=trainLabels(i,1) && trainLabels(i,1)==0)
-        corrError=corrError+1;
-    else if (predicted(1,i)~=trainLabels(i,1) && trainLabels(i,1)==1)
-            errError=errError+1;
-        end
-    end
-end
-%classError
-numberErr=nnz(trainLabels);
-numberCorr=597-numberErr;
-classError=0.5*(errError/numberErr)+0.5*(corrError/numberCorr);
-classError2=0.33*(errError/numberErr)+0.66*(corrError/numberCorr);
+predicted = computePrediction(trainData, 712, threshVal);
+predicted=predicted';
+
+%classification accuracy & classification error
+[classificationError, classificationAccuracy] = computeClassificationError(trainLabels, predicted)
+
+%classError; we examine effect of attributing different weights to errors
+%of different classes
+classError = computeClassError(trainLabels, predicted, 0.5)
+classError2 = computeClassError(trainLabels, predicted, 0.66)
 
 % Using the logical approach to check if the vector is the same
 predictLabels=(trainData(:,712)>threshVal); %Return logical array
 
-
-%cleanup
-clear correctCounter corrError errError i numberCorr numberErr predicted;
-
 %% Sclaing thresholding method to multiple dimensions
 %We can scale up method by judging data entry at 2 features with distinct
 %thresholds.
-%% scatterplot
-err=scatter(trainData(trainLabels==0,712),trainData(trainLabels==0,720)); hold on;
-corr=scatter(trainData(trainLabels==1,712),trainData(trainLabels==1,720));
 
 %% Plot class error and classification error as a function of threshold values
 %Calculate the class error
