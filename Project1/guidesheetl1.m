@@ -187,11 +187,9 @@ classError2 = computeClassError(trainLabels, predicted, 0.66)
 
 % Using the logical approach to check if the vector is the same
 predictLabels=(trainData(:,712)>threshVal); %Return logical array
-
-%% Sclaing thresholding method to multiple dimensions
-%We can scale up method by judging data entry at 2 features with distinct
+ %% Sclaing thresholding method to multiple dimensions
+%We can scale up method by judging data entry at every feature with distinct
 %thresholds.
-
 %determining optimal threashold for each feature
 determinedThresholds=[];
 ratio=0.5;
@@ -200,17 +198,18 @@ for i=1:length(trainData)
     thresh = computeOptimalThreashold( [0:0.01:1],ratio,i, trainData, trainLabels );
     determinedThresholds=[determinedThresholds thresh];
 end
-%% break to disable threasholds recalculation
-
-predicted=[];
 
 %predicting
+predicted=[];
+
 for i=1:597
      newPrediction = mrPredictor( determinedThresholds, trainData(i,:));
      predicted=[predicted newPrediction];
 end
 
-    
+%see if model is any good
+multiFeatureClassificationError = computeClassError(trainLabels, predicted, 0.5)
+
 %% Plot class error and classification error as a function of threshold values
 %Calculate the class error
 thresholdValues=[0.4:0.01:0.8];
@@ -241,8 +240,6 @@ title('Classification error as a function of threshold values');
 [classErrorMin, indexMin]=min(classErrorVector)
 bestThreshold=thresholdValues(indexMin)
 
-test = computeOptimalThreashold( thresholdValues,ratio,712, trainData, trainLabels )
-
 %% SUBMISSION
 testD=zeros(1,199);
 predictionVector=computePrediction(testData, 712, bestThreshold); %testData
@@ -250,3 +247,10 @@ filename='submissionGuidesheet1-3.csv';
 %FID=fopen('filename');
 folder='C:\Users\Gianni\Documents\GitHub\DataAnalysis\Project1';
 labelToCSV(testD', filename, folder);
+%% Multi-dimensional submission
+ratio = 0.5;%Important because used to determine optimal feature thresholds (class error minimization)
+predictions = bubblegumClassifier( trainData,trainLabels,testData,ratio);
+filename='multiDimSub.csv'; 
+folder='C:\Users\Julian\Desktop\DataAnalysis\Project1';
+labelToCSV(predictions', filename, folder);
+

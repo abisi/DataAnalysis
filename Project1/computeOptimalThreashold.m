@@ -14,8 +14,8 @@ for t=1:length(thresholdValues)
     classificationErrorVector=[classificationErrorVector classificationError];
 end
 
-[classErrorMin, indexMin]=min(classErrorVector)
-bestThreshold=thresholdValues(indexMin)
+[classErrorMin, indexMin]=min(classErrorVector);
+bestThreshold=thresholdValues(indexMin);
 minimizedClassError=classErrorMin;
 
 
