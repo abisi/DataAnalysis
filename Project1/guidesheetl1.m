@@ -207,6 +207,9 @@ numberCorr=597-numberErr;
 classError=0.5*(errError/numberErr)+0.5*(corrError/numberCorr);
 classError2=0.33*(errError/numberErr)+0.66*(corrError/numberCorr);
 
+% Using the logical approach to check if the vector is the same
+predictLabels=(trainData(:,712)>threshVal); %Return logical array
+
 
 %cleanup
 clear correctCounter corrError errError i numberCorr numberErr predicted;
@@ -220,7 +223,7 @@ corr=scatter(trainData(trainLabels==1,712),trainData(trainLabels==1,720));
 
 %% Plot class error and classification error as a function of threshold values
 %Calculate the class error
-thresholdValues=[0.4:0.05:0.8];
+thresholdValues=[0.4:0.01:0.8];
 ratio=0.5;
 classErrorVector=[];
 classificationErrorVector=[];
@@ -245,3 +248,12 @@ xlabel('Threshold');
 ylabel('Classification error');
 title('Classification error as a function of threshold values');
 
+[classErrorMin, indexMin]=min(classErrorVector)
+bestThreshold=thresholdValues(indexMin)
+
+%% SUBMISSION
+predictionVector=computePrediction(testData, 712, bestThreshold);
+filename='submissionGuidesheet1-2.csv'; 
+%FID=fopen('filename');
+folder='C:\Users\Gianni\Documents\GitHub\DataAnalysis\Project1';
+labelToCSV(predictionVector', filename, folder);
