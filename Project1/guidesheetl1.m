@@ -252,8 +252,9 @@ title('Classification error as a function of threshold values');
 bestThreshold=thresholdValues(indexMin)
 
 %% SUBMISSION
-predictionVector=computePrediction(testData, 712, bestThreshold);
-filename='submissionGuidesheet1-2.csv'; 
+testD=zeros(1,199);
+predictionVector=computePrediction(testData, 712, bestThreshold); %testData
+filename='submissionGuidesheet1-3.csv'; 
 %FID=fopen('filename');
 folder='C:\Users\Gianni\Documents\GitHub\DataAnalysis\Project1';
-labelToCSV(predictionVector', filename, folder);
+labelToCSV(testD', filename, folder);
