@@ -1,8 +1,8 @@
-function [ predictionVector ] = bubblegumClassifier( trainingData,trainingLabels,testingData,ratio )
+function [predictionVector] = bubblegumClassifier(trainingData, trainingLabels, testingData, ratio )
 %Mutidimensional model; ratio is important because it defines how optimal
-%thresholds are claculated (c.f class error formula)
+%thresholds are calculated (cf. class error formula)
 
-%determining optimal threashold for each feature
+%Determining optimal threashold for each feature
 determinedThresholds=[];
 
 for i=1:length(trainingData)
@@ -10,7 +10,7 @@ for i=1:length(trainingData)
     determinedThresholds=[determinedThresholds thresh];
 end
 
-%predicting
+%Predicting
 predicted=[];
 numberSamples=size(testingData,1);
 
