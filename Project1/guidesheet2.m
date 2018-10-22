@@ -124,25 +124,23 @@ ratio = 0.33;
 
 % Comparison train and test errors
 classifierDiagLin = fitcdiscr(trainSet,trainLabels,'DiscrimType','diaglinear');
-errorDiagLin = trainTestError( trainSet, trainLabels, testSet, testLabels, classifierDiagLin, ratio );
+errorDiagLin = trainTestError( trainSet, trainLabels, testSet, testLabels, classifierDiagLin, ratio )
 
 %Same with linear, diagquadratic, quadratic
 %Linear
 classifierLin = fitcdiscr(trainSet,trainLabels,'DiscrimType','linear');
-errorLin = trainTestError( trainSet, trainLabels, testSet, testLabels, classifierLin, ratio );
+errorLin = trainTestError( trainSet, trainLabels, testSet, testLabels, classifierLin, ratio )
 
 %Diagquadratic
 classifierDiagQuad = fitcdiscr(trainSet,trainLabels,'DiscrimType','diagquadratic');
-errorDiagQuad = trainTestError( trainSet, trainLabels, testSet, testLabels, classifierDiagQuad, ratio );
+errorDiagQuad = trainTestError( trainSet, trainLabels, testSet, testLabels, classifierDiagQuad, ratio )
 
 %Quadratic - isn't supposed to work
-
-<<<<<<< HEAD
-%- Would we still choose the same classifier ? -> linear has errors ~= 0.03
-=======
-%- Would we still choose the same classifier ?
->>>>>>> fa277867e75b71ba31a80b0ce2eeedc72ad886aa
-%- Improvement on training error does not improve testing error as
+%- Would we still choose the same classifier ? -> linear has errors ~= 0.03 
+%- Yes : linear
+classifierLin = fitcdiscr(trainSet,trainLabels,'DiscrimType','linear');
+errorLinTest = trainTestError(testSet, testLabels, testSet, testLabels, classifierLin, ratio )
+%- Improvement on training error does not improve testing error as...
 %- Can't use quadratic : covariance matrix is SINGULAR i.e. not invertible
 
 %Complexity - number of parameters
@@ -160,10 +158,58 @@ errorDiagQuad = trainTestError( trainSet, trainLabels, testSet, testLabels, clas
 
 %% Cross validation for performance estimation
 
-N = length(trainData);
+%Param.
+ratio = 1/3;
+N = size(trainData,1);
 k = 10; %or we could set it up to 6 as we have ~600 samples, so size(subset)=100...?
 
-%Partition comparison
+%1. Partition comparison
+
 cp_N = cvpartition(N, 'kfold', k);
 cp_labels = cvpartition(trainLabels, 'kfold', k);
+%Samples per class and per fold :
+% cp_N: 1843-1844 per fold (per class)
+% cp_labels: 269-270 per fold
+% Would use cp_N because MORE DATA.
+
+
+%2. k-fold cross validation
+errorLinTest = zeros(cp_N.NumTestSets,1);
+for i = 1:cp_N.NumTestSets
+    trainId = cp_N.training(i);
+    testId = cp_N.test(i);
+    %train and predict
+    classifierLin = fitcdiscr(trainData(trainId,:), trainLabels(trainId,:), 'DiscrimType', 'linear');
+    yhatLin = predict(classifierLin, trainData(testId,:));
+    %compute test error
+    errorLinTest(i) = computeClassificationError(trainLabels(testId,:), yhatLin);    
+end
+meanError = mean(errorLinTest,1)
+stdError = std(errorLinTest) %Stability of performance : standard deviation of cross-validation error
+
+
+%3. Repeat with reparition(cp)
+errorLinTest = zeros(cp_N.NumTestSets,1);
+for i = 1:cp_N.NumTestSets
+    repartition(cp_N);
+    trainId = cp_N.training(i);
+    testId = cp_N.test(i);
+    %train and predict
+    classifierLin = fitcdiscr(trainData(trainId,:), trainLabels(trainId,:), 'DiscrimType', 'linear');
+    yhatLin = predict(classifierLin, trainData(testId,:));
+    %compute test error
+    errorLinTest(i) = computeClassificationError(trainLabels(testId,:), yhatLin);    
+end
+meanError_2 = mean(errorLinTest,1)
+%Stability of performance : standard deviation of cross-validation error
+stdError_2 = std(errorLinTest)
+
+% -No changes using repartition(cp_N)...
+% -Why: repartition only rerandomize the partition -> should not affect
+% result too much ? 
+% -Advantages of varying or similar classification performances : if
+% similar, means preliminary model on cross-validation is consistent thus
+% stable
+% - No, model is made from entire training dataset -> cross validation only
+% gives indication on the quality of the model
 
