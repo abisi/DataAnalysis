@@ -1,4 +1,4 @@
-%% LDA/QDA classifiers
+%% Guidesheet2: LDA/QDA classifiers
 %feature dimentionality reduction
 features=trainData(:,1:10:end);
 labels=trainLabels;

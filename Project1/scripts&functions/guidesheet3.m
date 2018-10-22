@@ -1,33 +1,51 @@
-load('trainlabels.mat');
-load('trainLabels.mat');
+%% Guidesheet3: Model selection and nested cross-validation
 
-C = cvpartition(597, 'kFold', 10) %trainData(:,750), n=597
-C.NumTestSets;
+%%Cross-validation for hyperparameter optimization
 
-err=zeros(C.NumTestSets, 1);
+%Fisher-based feature selection
+k = 10;
+maxFt = 20;
+cp_labels = cvpartition(trainLabels, 'kfold', k);
+trainErrors = zeros(k, maxFt);
+testErrors = zeros(k, maxFt);
 
-for i=1:C.NumTestSets
-    trIdx=C.TrainSize(i);
-    teIdx=C.TestSize(i);
-    ytest=classify(trainData(teIdx,:), trainData(trIdx,:), trainLabels(trIdx,:));
-    err(i)=sum(~strcmp(ytest,trainLabels(teIdx)));
+for ft = 1:maxFt
+    for i=1:cp_labels.NumTestSets
+        trainId = cp_labels.training(i);
+        testId = cp_labels.test(i);
+        %Pick ft-th best features
+    	[orderedInd, orderedPower] = rankfeat(trainData(trainId,:), trainLabels(trainId,:), 'fisher');
+        bestInd = orderedInd(1:ft);
+        %Build model and predict
+        classifierDiagLin = fitcdiscr(trainData(trainId, bestInd), trainLabels(trainId,:), 'DiscrimType', 'diaglinear');
+        yhatTrain = predict(classifierDiagLin, trainData(trainId, bestInd));
+        yhatTest = predict(classifierDiagLin, trainData(testId, bestInd));
+        %Compute both errors
+        errTrain = computeClassificationError(trainLabels(trainId,:), yhatTrain);
+        errTest = computeClassificationError(trainLabels(testId,:), yhatTest);
+        %Store 
+        trainErrors(i, ft) = errTrain;
+        testErrors(i, ft) = errTest;
+    end
 end
 
-cvErr=sum(err)/(sum(C.TestSize));
+%Average errors (+std)
+meanTrainErrors = mean(trainErrors)
+meanTestErrors = mean(testErrors)
+
+stdTrainErrors = std(trainErrors);
+stdTestErrors = std(testErrors);
+
+%Let's plot this
+%Train
+figure
+plot(1:maxFt, meanTrainErrors, 'LineWidth', 2, 'Color', 'r'); hold on
+xlabel('Number of features');
+ylabel('Mean training error'); 
+
+%Test
+plot(1:maxFt, meanTestErrors, 'LineWidth', 2, 'Color', 'b'); 
+xlabel('Number of features');
+ylabel('Mean testing error'); hold off
 
 
-
-
-
-
-%Matlab template
-% load('fisheriris');
-%       CVO = cvpartition(species,'KFold',10);
-%       err = zeros(CVO.NumTestSets,1);
-%       for i = 1:CVO.NumTestSets
-%           trIdx = CVO.training(i);
-%           teIdx = CVO.test(i);
-%           ytest = classify(meas(teIdx,:),meas(trIdx,:),species(trIdx,:));
-%           err(i) = sum(~strcmp(ytest,species(teIdx)));
-%       end
-%       cvErr = sum(err)/sum(CVO.TestSize);
