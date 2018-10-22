@@ -174,10 +174,10 @@ cp_labels = cvpartition(trainLabels, 'kfold', k);
 
 
 %2. k-fold cross validation
-errorLinTest = zeros(cp_N.NumTestSets,1);
-for i = 1:cp_N.NumTestSets
-    trainId = cp_N.training(i);
-    testId = cp_N.test(i);
+errorLinTest = zeros(cp_labels.NumTestSets,1);
+for i = 1:cp_labels.NumTestSets
+    trainId = cp_labels.training(i);
+    testId = cp_labels.test(i);
     %train and predict
     classifierLin = fitcdiscr(trainData(trainId,:), trainLabels(trainId,:), 'DiscrimType', 'linear');
     yhatLin = predict(classifierLin, trainData(testId,:));
@@ -189,11 +189,11 @@ stdError = std(errorLinTest) %Stability of performance : standard deviation of c
 
 
 %3. Repeat with reparition(cp)
-errorLinTest = zeros(cp_N.NumTestSets,1);
-for i = 1:cp_N.NumTestSets
-    repartition(cp_N);
-    trainId = cp_N.training(i);
-    testId = cp_N.test(i);
+errorLinTest = zeros(cp_labels.NumTestSets,1);
+for i = 1:cp_labels.NumTestSets
+    repartition(cp_labels); %just rerandomizes, doesn't provide diff. performance
+    trainId = cp_labels.training(i);
+    testId = cp_labels.test(i);
     %train and predict
     classifierLin = fitcdiscr(trainData(trainId,:), trainLabels(trainId,:), 'DiscrimType', 'linear');
     yhatLin = predict(classifierLin, trainData(testId,:));
@@ -204,9 +204,9 @@ meanError_2 = mean(errorLinTest,1)
 %Stability of performance : standard deviation of cross-validation error
 stdError_2 = std(errorLinTest)
 
-% -No changes using repartition(cp_N)...
+% -No changes using repartition(cp_N). OK.
 % -Why: repartition only rerandomize the partition -> should not affect
-% result too much ? 
+% result by much
 % -Advantages of varying or similar classification performances : if
 % similar, means preliminary model on cross-validation is consistent thus
 % stable
