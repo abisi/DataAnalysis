@@ -25,6 +25,9 @@ yhatDiagQuad=predict(classifierDiagQuad,features);
 [errorDiagLin, accurDiagLin] = computeClassificationError(trainLabels, yhatDiagLin);
 [errorDiagQuad, accurDiagQuad] = computeClassificationError(trainLabels, yhatDiagQuad);
 
+%MODEL SELECTION BASED ON CLASSIFICATION ACCURACY: Linear > Linear with
+%prior probas set to unif > Quadtraic diag > Linear Diag
+
 % Class error calculations for each classifier:
 [classErrorLin] = computeClassError(trainLabels, yhatLin, 0.5);
 [classErrorLinUnif] = computeClassError(trainLabels, yhatLinUnif, 0.5);
@@ -39,8 +42,8 @@ yhatDiagQuad=predict(classifierDiagQuad,features);
 %check together
 
 clear all;
-load('trainSet.mat');
-load('trainLabels.mat');
+load('../data/trainSet.mat');
+load('../data/trainLabels.mat');
 labels=trainLabels;
 features=trainData(:,1:10:end);
 
