@@ -114,17 +114,21 @@ title({['Class error for different classifier methods (ratio= ', num2str(ratio),
 %% Training and testing error
 %clearing previous vars
 clear all;
-load('trainSet.mat');
-load('trainLabels.mat');
+load('../data/trainSet.mat');
+load('../data/trainLabels.mat');
 
 % From previous section, we're working with : class error
 % Divide dataset
 trainSet = trainData(1:2:end,1:10:end);
 testSet = trainData(2:2:end,1:10:end);
+
+reducedTrainSet=trainData(1:2:end,1:30:end);
+reducedTestSet=trainData(2:2:end,1:30:end);
+
 trainLabels = trainLabels(1:2:end);
 testLabels = trainLabels(2:2:end);
 
-ratio = 0.33;
+ratio = 0.5;
 
 % Comparison train and test errors
 classifierDiagLin = fitcdiscr(trainSet,trainLabels,'DiscrimType','diaglinear');
@@ -139,7 +143,10 @@ errorLin = trainTestError( trainSet, trainLabels, testSet, testLabels, classifie
 classifierDiagQuad = fitcdiscr(trainSet,trainLabels,'DiscrimType','diagquadratic');
 errorDiagQuad = trainTestError( trainSet, trainLabels, testSet, testLabels, classifierDiagQuad, ratio )
 
-%Quadratic - isn't supposed to work
+%Quadratic
+classifierQuad = fitcdiscr(reducedTrainSet,trainLabels,'DiscrimType','quadratic');
+errorQuad = trainTestError( reducedTrainSet, trainLabels, reducedTestSet, testLabels, classifierQuad, ratio )
+
 %- Would we still choose the same classifier ? -> linear has errors ~= 0.03 
 %- Yes : linear
 classifierLin = fitcdiscr(trainSet,trainLabels,'DiscrimType','linear');
@@ -163,14 +170,14 @@ errorLinTest = trainTestError(testSet, testLabels, testSet, testLabels, classifi
 %% Cross validation for performance estimation
 
 %Param.
-ratio = 1/3;
-N = size(trainData,1);
+N = size(trainData,1); %597
 k = 10; %or we could set it up to 6 as we have ~600 samples, so size(subset)=100...?
 
 %1. Partition comparison
 
-cp_N = cvpartition(N, 'kfold', k);
-cp_labels = cvpartition(trainLabels, 'kfold', k);
+cp_N = cvpartition(N, 'kfold', k)
+cp_labels = cvpartition(trainLabels, 'kfold', k)
+
 %Samples per class and per fold :
 % cp_N: 1843-1844 per fold (per class)
 % cp_labels: 269-270 per fold
@@ -180,8 +187,8 @@ cp_labels = cvpartition(trainLabels, 'kfold', k);
 %2. k-fold cross validation
 errorLinTest = zeros(cp_labels.NumTestSets,1);
 for i = 1:cp_labels.NumTestSets
-    trainId = cp_labels.training(i);
-    testId = cp_labels.test(i);
+    trainId = cp_labels.training(i); %marks training samples with 1
+    testId = cp_labels.test(i); % marks testing samples with 1
     %train and predict
     classifierLin = fitcdiscr(trainData(trainId,:), trainLabels(trainId,:), 'DiscrimType', 'linear');
     yhatLin = predict(classifierLin, trainData(testId,:));
@@ -193,20 +200,20 @@ stdError = std(errorLinTest) %Stability of performance : standard deviation of c
 
 
 %3. Repeat with reparition(cp)
-errorLinTest = zeros(cp_labels.NumTestSets,1);
+errorLinTest2 = zeros(cp_labels.NumTestSets,1);
 for i = 1:cp_labels.NumTestSets
-    repartition(cp_labels); %just rerandomizes, doesn't provide diff. performance
+    cp_labels=repartition(cp_labels); %just rerandomizes, doesn't provide diff. performance
     trainId = cp_labels.training(i);
     testId = cp_labels.test(i);
     %train and predict
     classifierLin = fitcdiscr(trainData(trainId,:), trainLabels(trainId,:), 'DiscrimType', 'linear');
     yhatLin = predict(classifierLin, trainData(testId,:));
     %compute test error
-    errorLinTest(i) = computeClassificationError(trainLabels(testId,:), yhatLin);    
+    errorLinTest2(i) = computeClassificationError(trainLabels(testId,:), yhatLin);    
 end
-meanError_2 = mean(errorLinTest,1)
+meanError_2 = mean(errorLinTest2,1)
 %Stability of performance : standard deviation of cross-validation error
-stdError_2 = std(errorLinTest)
+stdError_2 = std(errorLinTest2)
 
 % -No changes using repartition(cp_N). OK.
 % -Why: repartition only rerandomize the partition -> should not affect
