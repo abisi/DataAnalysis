@@ -1,6 +1,7 @@
 %% Guidesheet2: LDA/QDA classifiers
 %feature dimentionality reduction
 features=trainData(:,1:10:end);
+reducedFeatures=trainData(:,1:20:end);
 labels=trainLabels;
 
 %Establishing classification models:
@@ -8,31 +9,31 @@ classifierLin=fitcdiscr(features,labels,'DiscrimType','linear');
 %Uniform classes (prior proba are considered equal)
 classifierLinUnif=fitcdiscr(features,labels,'DiscrimType','linear','prior','uniform');
 classifierDiagLin=fitcdiscr(features,labels,'DiscrimType','diaglinear','prior','uniform');
-%classifierQuad=fitcdiscr(featuresSubset,labels,'DiscrimType','quadratic'); %covariance matrix SINGULAR 
+classifierQuad=fitcdiscr(reducedFeatures,labels,'DiscrimType','quadratic'); %covariance matrix SINGULAR 
 classifierDiagQuad=fitcdiscr(features,labels,'DiscrimType','diagquadratic','prior','uniform')
 
 %Predictions using models
 yhatLin=predict(classifierLin,features);
 yhatLinUnif=predict(classifierLinUnif,features); %Uniform
 yhatDiagLin=predict(classifierDiagLin,features);
-%yhatQuad=predict(classifierQuad,featuresSubset);
+yhatQuad=predict(classifierQuad,reducedFeatures);
 yhatDiagQuad=predict(classifierDiagQuad,features);
 
 %Classification error/accuracy calculations for each classifier:
 [errorLin, accurLin] = computeClassificationError(trainLabels, yhatLin);
 [errorLinUnif, accurLinUnif] = computeClassificationError(trainLabels, yhatLinUnif);
-%[errorQuad, accurQuad] = computeClassificationError(trainLabels, yhatLinQuad)
+[errorQuad, accurQuad] = computeClassificationError(trainLabels, yhatQuad)
 [errorDiagLin, accurDiagLin] = computeClassificationError(trainLabels, yhatDiagLin);
 [errorDiagQuad, accurDiagQuad] = computeClassificationError(trainLabels, yhatDiagQuad);
 
-%MODEL SELECTION BASED ON CLASSIFICATION ACCURACY: Linear > Linear with
-%prior probas set to unif > Quadtraic diag > Linear Diag
+%MODEL SELECTION BASED ON CLASSIFICATION ACCURACY: Quad > Linear > Linear 
+%with prior probas set to unif > Quadtraic diag > Linear Diag
 
 % Class error calculations for each classifier:
 [classErrorLin] = computeClassError(trainLabels, yhatLin, 0.5);
 [classErrorLinUnif] = computeClassError(trainLabels, yhatLinUnif, 0.5);
 [classErrorDiagLin] = computeClassError(trainLabels, yhatDiagLin, 0.5);
-%[classErrorQuad] = computeClassError(trainLabels, yhatQuad, 0.5);
+[classErrorQuad] = computeClassError(trainLabels, yhatQuad, 0.5);
 [classErrorDiagQuad] = computeClassError(trainLabels, yhatDiagQuad, 0.5);
 
 
