@@ -47,5 +47,7 @@ ylabel('Mean training error');
 plot(1:maxFt, meanTestErrors, 'LineWidth', 2, 'Color', 'b'); 
 xlabel('Number of features');
 ylabel('Mean testing error'); hold off
+%% Nested cross-validation for performance estimation
+
 
 
