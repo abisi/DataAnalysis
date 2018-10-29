@@ -21,8 +21,8 @@ for ft = 1:maxFt %incrementing number of features
         yhatTrain = predict(classifierDiagLin, trainData(trainId, bestInd));
         yhatTest = predict(classifierDiagLin, trainData(testId, bestInd));
         %Compute both errors
-        errTrain = computeClassificationError(trainLabels(trainId,:), yhatTrain);
-        errTest = computeClassificationError(trainLabels(testId,:), yhatTest);
+        errTrain = computeClassError(trainLabels(trainId,:), yhatTrain, 0.5);
+        errTest = computeClassError(trainLabels(testId,:), yhatTest, 0.5);
         %Store 
         trainErrors(i, ft) = errTrain; % Each column respresents a different model (different amount of features used)
         testErrors(i, ft) = errTest; % Each row of selected column contains different fold respective errors.
@@ -96,7 +96,7 @@ for i=1:kOuter
     selectedFeatures=ftIndex(1:optimal_nFeatures);
     optimalModel = fitcdiscr(outerTrainingSet(:,selectedFeatures), outerTrainingLabels, 'DiscrimType', 'diaglinear');
     prediction=predict(optimalModel, testSet(:,selectedFeatures));
-    testError = computeClassificationError(testLabels,prediction);
+    testError = computeClassError(testLabels,prediction, 0.5); 
     testErrorStorage(1,i)=testError;
 end
     
