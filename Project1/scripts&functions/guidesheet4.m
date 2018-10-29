@@ -14,12 +14,14 @@ diagPostCov=diag(postCov);
 %% Forward Feature Selection
 classifiertype='diaglinear';
 k=10;
+ratio=0.5;
 
-fun = @(xT,yT,xt,yt) length(yt)*(your_error(yt,predict(fitcdiscr(xT,yT,'discrimtype', classifiertype), xt)));
+
+fun = @(xT,yT,xt,yt) length(yt)*(computeClassError(yt,predict(fitcdiscr(xT,yT,'discrimtype', classifiertype), xt), ratio));
 
 opt = statset('Display','iter','MaxIter',100);
-cp=cvpartition(trainLabels,'kfold',k);
-[sel,hst] = sequentialfs(fun,trainData,trainLabels,'cv',cp,'options',opt);
+cp=cvpartition(trainLabels(1:10:end, :),'kfold',k);
+[sel,hst] = sequentialfs(fun,trainData(1:10:end,:),trainLabels(1:10:end, :),'cv',cp,'options',opt);
 
 
 
