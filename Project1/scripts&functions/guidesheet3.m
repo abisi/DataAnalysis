@@ -53,10 +53,12 @@ clear all;
 load('../data/trainSet.mat');
 load('../data/trainLabels.mat');
 
+Priors.ClassNames=[0 1];
+Priors.ClassProbs=[0.7 0.3];
 kOuter=3;
 kInner=4;
 nObservations=length(trainLabels);
-maxN_features=10;
+maxN_features=100;
 validationErrorStorage=zeros(maxN_features,kInner);
 meanValidationErrorStorage=zeros(maxN_features,1);
 optimalHyperParamStorage=zeros(1,kOuter);
@@ -83,9 +85,9 @@ for i=1:kOuter
         [ftIndex,ftPower] = rankfeat(innerTrainingSet, innerTrainingLabels, 'fisher');
         for q=1:maxN_features
             selectedFeatures=ftIndex(1:q); % ftIndex is a list of feature indexs ordered from most powerful to least (fisher scoring)
-            classifier = fitcdiscr(innerTrainingSet(:,selectedFeatures), innerTrainingLabels, 'DiscrimType', 'diaglinear');
+            classifier = fitcdiscr(innerTrainingSet(:,selectedFeatures), innerTrainingLabels, 'DiscrimType', 'diaglinear','Prior',Priors);
             prediction=predict(classifier, validationSet(:,selectedFeatures));
-            validationError = computeClassificationError(validationLabels,prediction);
+            validationError = computeClassError(validationLabels,prediction,0.5);
             validationErrorStorage(q,t)=validationError;
         end
     end
@@ -94,10 +96,8 @@ for i=1:kOuter
     optimalHyperParamStorage(1,i)=optimal_nFeatures;
     [ftIndex,ftPower] = rankfeat(outerTrainingSet, outerTrainingLabels, 'fisher');
     selectedFeatures=ftIndex(1:optimal_nFeatures);
-    optimalModel = fitcdiscr(outerTrainingSet(:,selectedFeatures), outerTrainingLabels, 'DiscrimType', 'diaglinear');
+    optimalModel = fitcdiscr(outerTrainingSet(:,selectedFeatures), outerTrainingLabels, 'DiscrimType', 'diaglinear','Prior',Priors);
     prediction=predict(optimalModel, testSet(:,selectedFeatures));
     testError = computeClassError(testLabels,prediction, 0.5); 
     testErrorStorage(1,i)=testError;
 end
-    
-% CA FONCTIONNE! (après 3h -.-)
