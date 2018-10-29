@@ -47,7 +47,57 @@ ylabel('Mean training error');
 plot(1:maxFt, meanTestErrors, 'LineWidth', 2, 'Color', 'b'); 
 xlabel('Number of features');
 ylabel('Mean testing error'); hold off
+
 %% Nested cross-validation for performance estimation
+clear all;
+load('../data/trainSet.mat');
+load('../data/trainLabels.mat');
 
+kOuter=3;
+kInner=4;
+nObservations=length(trainLabels);
+maxN_features=10;
+validationErrorStorage=zeros(maxN_features,kInner);
+meanValidationErrorStorage=zeros(maxN_features,1);
+optimalHyperParamStorage=zeros(1,kOuter);
+testErrorStorage=zeros(1,kOuter);
 
+partition_outer = cvpartition(nObservations, 'kfold', kOuter);
 
+for i=1:kOuter
+    outerTrainingMarker=partition_outer.training(i);
+    testMarker=partition_outer.test(i);
+    outerTrainingSet=trainData(outerTrainingMarker, :);
+    outerTrainingLabels=trainLabels(outerTrainingMarker, :);
+    testSet=trainData(testMarker, :);
+    testLabels=trainLabels(testMarker, :);
+    nOuterTrainingSet=size(outerTrainingSet,1);
+    for t=1:kInner
+        partition_inner = cvpartition(nOuterTrainingSet, 'kfold', kInner);
+        innerTrainingMarker=partition_inner.training(i);
+        validationMarker=partition_inner.test(i);
+        innerTrainingSet=outerTrainingSet(innerTrainingMarker, :);
+        innerTrainingLabels=outerTrainingLabels(innerTrainingMarker, :);
+        validationSet=outerTrainingSet(validationMarker, :);
+        validationLabels=outerTrainingLabels(validationMarker,:);
+        [ftIndex,ftPower] = rankfeat(innerTrainingSet, innerTrainingLabels, 'fisher');
+        for q=1:maxN_features
+            selectedFeatures=ftIndex(1:q); % ftIndex is a list of feature indexs ordered from most powerful to least (fisher scoring)
+            classifier = fitcdiscr(innerTrainingSet(:,selectedFeatures), innerTrainingLabels, 'DiscrimType', 'diaglinear');
+            prediction=predict(classifier, validationSet(:,selectedFeatures));
+            validationError = computeClassificationError(validationLabels,prediction);
+            validationErrorStorage(q,t)=validationError;
+        end
+    end
+    meanValidationErrorStorage=(mean(validationErrorStorage'))';
+    [lowestMeanValidationError optimal_nFeatures]=min(meanValidationErrorStorage);
+    optimalHyperParamStorage(1,i)=optimal_nFeatures;
+    [ftIndex,ftPower] = rankfeat(outerTrainingSet, outerTrainingLabels, 'fisher');
+    selectedFeatures=ftIndex(1:optimal_nFeatures);
+    optimalModel = fitcdiscr(outerTrainingSet(:,selectedFeatures), outerTrainingLabels, 'DiscrimType', 'diaglinear');
+    prediction=predict(optimalModel, testSet(:,selectedFeatures));
+    testError = computeClassificationError(testLabels,prediction);
+    testErrorStorage(1,i)=testError;
+end
+    
+% CA FONCTIONNE! (après 3h -.-)
