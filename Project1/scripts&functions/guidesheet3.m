@@ -1,9 +1,11 @@
-%% Guidesheet3: Model selection and nested cross-validation
+% Guidesheet3: Model selection and nested cross-validation
 
-%%Cross-validation for hyperparameter optimization
-clear all;
+clear all
+close all
 load('../data/trainSet.mat');
 load('../data/trainLabels.mat');
+
+%% Cross-validation for hyperparameter optimization
 
 Priors.ClassNames=[0 1];
 Priors.ClassProbs=[0.7 0.3];
@@ -26,7 +28,7 @@ optimalHyperParamStorage=0;
         [ftIndex,ftPower] = rankfeat(trainingSet, trainingLabels, 'fisher');
         for q=1:maxN_features
             selectedFeatures=ftIndex(1:q); % ftIndex is a list of feature indexs ordered from most powerful to least (fisher scoring)
-            classifier = fitcdiscr(trainingSet(:,selectedFeatures), trainingLabels, 'DiscrimType', 'diaglinear','Prior',Priors);
+            classifier = fitcdiscr(trainingSet(:,selectedFeatures), trainingLabels, 'DiscrimType', 'diaglinear','Prior', Priors);
             prediction=predict(classifier, testSet(:,selectedFeatures));
             trainingPrediction=predict(classifier, trainingSet(:,selectedFeatures));
             testError = computeClassError(testLabels,prediction,0.5);
