@@ -1,5 +1,6 @@
+% Guidesheet 4: PCA and Forward Feature Selection
 
-%% Guidesheet 4: Principle Component Analysis
+%% Principal Component Analysis
 [coeff,score,variance]=pca(trainData);
 
 priorCov=cov(trainData);
