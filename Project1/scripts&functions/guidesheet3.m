@@ -9,7 +9,7 @@ Priors.ClassNames=[0 1];
 Priors.ClassProbs=[0.7 0.3];
 k=4;
 nObservations=length(trainLabels);
-maxN_features=100;
+maxN_features=10;
 
 trainingErrorStorage=zeros(maxN_features,k);
 testErrorStorage=zeros(maxN_features,k);

@@ -1,3 +1,4 @@
+
 %% Guidesheet 4: Principle Component Analysis
 clear all;
 load('../data/trainSet.mat');
@@ -13,17 +14,16 @@ diagPriorCov=diag(priorCov);
 diagPostCov=diag(postCov);
 
 meanPriorVar=mean(diagPriorCov);
+%medPriorVar=median(diagPriorCov); %for robustness
 
 meanPostVar=mean(diagPostCov);
+%medPostVar=median(diagPostCov);
 
 %Maximum covariance values original data vs transformed data
 priorOffDiag=priorCov-diag(diagPriorCov);
 maxPriorCov=max(max(priorOffDiag));
 
-postOffDiag=postCov-diag(diagPostCov);
-maxPostCov=max(max(postOffDiag));
-% we can notice the (huge) decrease in covariance between the 2 (0.0360
-% against 1.43e-15)
+postOffDiag=postCov-diag
 
 %PCA maximise the variance in order to get rid off low-variance dimensions.
 %Therefore, we observe that the diagonal of the data (before and after
@@ -37,20 +37,6 @@ maxPostCov=max(max(postOffDiag));
 %thus minimised as well, meaning that the features are not correlated and
 %carry maximum information. Each PC represent a decrease in the system's
 %entropy.
-
-% PCs as Hyperparameters
-cumVar=cumsum(variance)/sum(variance);
-numPC=1:length(variance);
-plot(numPC, cumVar, 'r'); hold on;
-xlabel('Number of PCs');
-ylabel('Percentage of the total variance');
-title('Total information carried by Principal Components');
-
-idx90=find(cumVar>0.9);
-pc90=numPC(idx90(1));
-threshold90=line([pc90 pc90], [0 1]);
-set(threshold90,'LineWidth',1,'color','blue');
-
 
 %% PCA and cross-validation
 
@@ -84,6 +70,10 @@ load('../data/trainLabels.mat');
 kOut=3;
 kIn=10;
 partitionOut=cvpartition(length(trainLabels), 'kfold', kOut);
+
+for i=1:kOut
+    
+end
     
 
 
