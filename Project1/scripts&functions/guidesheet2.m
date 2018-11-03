@@ -1,191 +1,184 @@
-% Guidesheet2: LDA/QDA classifiers
+% Guidesheet2: Linear/Quadratic Discriminant Analysis Classifiers
 
-%% feature dimentionality reduction
-features=trainData(:,1:10:end);
-reducedFeatures=trainData(:,1:20:end);
-labels=trainLabels;
-
-%Establishing classification models:
-classifierLin=fitcdiscr(features,labels,'DiscrimType','linear');
-%Uniform classes (prior proba are considered equal)
-classifierLinUnif=fitcdiscr(features,labels,'DiscrimType','linear','prior','uniform');
-classifierDiagLin=fitcdiscr(features,labels,'DiscrimType','diaglinear','prior','uniform');
-classifierQuad=fitcdiscr(reducedFeatures,labels,'DiscrimType','quadratic'); %covariance matrix SINGULAR 
-classifierDiagQuad=fitcdiscr(features,labels,'DiscrimType','diagquadratic','prior','uniform')
-
-%Predictions using models
-yhatLin=predict(classifierLin,features);
-yhatLinUnif=predict(classifierLinUnif,features); %Uniform
-yhatDiagLin=predict(classifierDiagLin,features);
-yhatQuad=predict(classifierQuad,reducedFeatures);
-yhatDiagQuad=predict(classifierDiagQuad,features);
-
-%Classification error/accuracy calculations for each classifier:
-[errorLin, accurLin] = computeClassificationError(trainLabels, yhatLin);
-[errorLinUnif, accurLinUnif] = computeClassificationError(trainLabels, yhatLinUnif);
-[errorQuad, accurQuad] = computeClassificationError(trainLabels, yhatQuad)
-[errorDiagLin, accurDiagLin] = computeClassificationError(trainLabels, yhatDiagLin);
-[errorDiagQuad, accurDiagQuad] = computeClassificationError(trainLabels, yhatDiagQuad);
-
-%MODEL SELECTION BASED ON CLASSIFICATION ACCURACY: Quad > Linear > Linear 
-%with prior probas set to unif > Quadtraic diag > Linear Diag
-
-% Class error calculations for each classifier:
-[classErrorLin] = computeClassError(trainLabels, yhatLin, 0.5);
-[classErrorLinUnif] = computeClassError(trainLabels, yhatLinUnif, 0.5);
-[classErrorDiagLin] = computeClassError(trainLabels, yhatDiagLin, 0.5);
-[classErrorQuad] = computeClassError(trainLabels, yhatQuad, 0.5);
-[classErrorDiagQuad] = computeClassError(trainLabels, yhatDiagQuad, 0.5);
-
-
-%% Version 2.0
-%If this part of the code is correct, we can remove all the part above.
-%Small variations by comparing Class errors and classification errors >
-%check together
-
-clear all;
+clear all
+close all
 load('../data/trainSet.mat');
 load('../data/trainLabels.mat');
+load('../data/testSet.mat');
+
+%% LDA/QDA Classifiers
+
+%Initialize:
 labels=trainLabels;
-features=trainData(:,1:10:end);
-
-ratio=0.5;
-
-classifierTypes=["linear","diaglinear","diagquadratic"]; %"quadratic" not used because singular problem 
-
-%Compute classification error and class error for classifier: 
-classificationErrors=[];
-classErrors=[];
-
-priorProba="uniform";
-classificationErrors_priorProba=[];
-classErrors_priorProba=[];
+classificationErrors = []; 
+scores = [];
+%Feature subset
+features=trainData(:, 1:5:end);
+%LDA/QDA
+classifierTypes = ["linear", "diaglinear", "diagquadratic"]; %"quadratic" not used because singular problem  
 
 for i=1:length(classifierTypes)
-   ypred=classifierPrediction(features, labels, classifierTypes(i));
-  
-   classificationError=computeClassificationError(labels, ypred);
-   classificationErrors=[classificationErrors classificationError];
-   
-   classError = computeClassError(labels, ypred, ratio);
-   classErrors = [classErrors, classError];
-   
-   %Case with prior probability = uniform
-   ypred_priorProba=classifierPrediction(features, labels, classifierTypes(i), priorProba); %specifiy the prior proba to the function
-   
-   classificationError_priorProba=computeClassificationError(labels, ypred_priorProba);
-   classificationErrors_priorProba=[classificationErrors_priorProba classificationError_priorProba];
-   
-   classError_priorProba = computeClassError(labels, ypred_priorProba, ratio);
-   classErrors_priorProba = [classErrors_priorProba, classError_priorProba];
-   
+    
+   classifier = fitcdiscr(features, labels, 'DiscrimType', char(classifierTypes(i)));
+   yhat = predict(classifier, features);
+   [classificationErrors(i), scores(i)] = computeClassificationError(labels, yhat);
+    
 end
 
 %Display results - Classification error
-figure;
-bar(classificationErrors);
-set(gca,'XTickLabel',{'Linear','Diag Linear', 'Diag Quadratic'});
-ylabel('Classification Error');
-title('Classification error for different classifier methods');
+classificationErrors, scores
 
-%Display results - Class error
-figure;
-bar(classErrors);
-set(gca,'XTickLabel',{'Linear','Diag Linear', 'Diag Quadratic'});
-ylabel('Class Error');
-title(['Class error for different classifier methods (ratio= ', num2str(ratio), ')' ]);
+%Based on classification error, we'd use LINEAR classifier because error is 0.
+
+%% Prior probabilities - UNIFORM
+
+classificationErrors = []; 
+classErrors = [];
+classificationScores = [];
+classScores = [];
+
+for i=1:length(classifierTypes)
+    
+    %'uniform' sets all class probabiblities equal (although not true here)
+   classifier = fitcdiscr(features, labels, 'DiscrimType', char(classifierTypes(i)), 'Prior', 'uniform');
+   yhat = predict(classifier, features);
+   [classificationErrors(i), classificationScores(i)] = computeClassificationError(labels, yhat);
+   [classErrors(i), classScores(i)] = computeClassError(labels, yhat);
+    
+end
+
+%Display results - Classification error
+classificationErrors, classificationScores
+classErrors, classScores
+%With UNIFORM : gives absolutely the same thing which is normal since
+%uniform sets to equal probabilities.
+
+%% Prior probabilities - EMPIRICAL (default)
+
+classificationErrors = []; 
+classErrors = [];
+classificationScores = [];
+classScores = [];
+
+for i=1:length(classifierTypes)
+    
+    %'uniform' sets all class probabiblities equal (although not true here)
+   classifier = fitcdiscr(features, labels, 'DiscrimType', char(classifierTypes(i)), 'Prior', 'empirical');
+   yhat = predict(classifier, features);
+   [classificationErrors(i), classificationScores(i)] = computeClassificationError(labels, yhat);
+   [classErrors(i), classScores(i)] = computeClassError(labels, yhat);
+    
+end
+
+%Display results - Classification error
+classificationErrors, classificationScores
+classErrors, classScores
+%With EMPIRICAL : gives absolutely the same thing which is normal since
+%empirical sets finds class probabilities. Better performance with
+%empirical because does not artificially set equal probabilities (not the
+%case with our data).
 
 
-%Display results - Classification error, prior probability = uniform
-figure;
-bar(classificationErrors_priorProba);
-set(gca,'XTickLabel',{'Linear','Diag Linear', 'Diag Quadratic'});
-ylabel('Class Error');
-title({'Classification error for different classifier methods'; 'Prior probability: uniform'});
-
-%Display results - Class error, prior probability = uniform
-figure;
-bar(classErrors_priorProba);
-set(gca,'XTickLabel',{'Linear','Diag Linear', 'Diag Quadratic'});
-ylabel('Class Error');
-title({['Class error for different classifier methods (ratio= ', num2str(ratio), ')' ]; 'Prior probability: uniform'});
-
-
+%% Summary: Assuming that computeClassError already has the ratio 2/3-1/z3. 
+% With uniform prior, classifier assumes equal class probabilities, which is not the case. 
+% Thus, whether we compute classification error or class error does not matter because 
+% we have already assumed equal classes thus both functions return the same
+% results.
+% Without uniform prior, i.e. empirical, classifier found with calculated
+% class probabilities (by fitcdiscr). Scores are higher since the real
+% class distributions is taken into account.
+% Thus, we will use CLASS ERROR from now on, ASSUMING that the class distributions will remain the same.
 
 %% Training and testing error
-%clearing previous vars
-clear all;
-load('../data/trainSet.mat');
-load('../data/trainLabels.mat');
 
-% From previous section, we're working with : class error
-% Divide dataset
-trainSet = trainData(1:2:end,1:10:end);
-testSet = trainData(2:2:end,1:10:end);
+set1 = trainData(1:2:end,1:5:end); %set1
+set2 = trainData(2:2:end,1:5:end);  %set2
 
-reducedTrainSet=trainData(1:2:end,1:30:end);
-reducedTestSet=trainData(2:2:end,1:30:end);
+reducedSet1 = trainData(1:2:end,1:30:end); %because too long...?
+reducedSet2 = trainData(2:2:end,1:30:end);
 
-trainLabels = trainLabels(1:2:end);
-testLabels = trainLabels(2:2:end);
-
-ratio = 0.5;
+labels1 = trainLabels(1:2:end);
+labels2 = trainLabels(2:2:end);
 
 % Comparison train and test errors
-classifierDiagLin = fitcdiscr(trainSet,trainLabels,'DiscrimType','diaglinear');
-errorDiagLin = trainTestError( trainSet, trainLabels, testSet, testLabels, classifierDiagLin, ratio )
+classifierDiagLin = fitcdiscr(set1, labels1, 'DiscrimType','diaglinear');
+yhatDiagLin = predict(classifierDiagLin, set1);
+trainingError = computeClassError(labels1, yhatDiagLin)
+testingError = computeClassError(labels2, yhatDiagLin)
 
-%Same with linear, diagquadratic, quadratic
-%Linear
-classifierLin = fitcdiscr(trainSet,trainLabels,'DiscrimType','linear');
-errorLin = trainTestError( trainSet, trainLabels, testSet, testLabels, classifierLin, ratio )
+% Training and testing error are similar, yet slightly higher on set2
+% testing set.
 
-%Diagquadratic
-classifierDiagQuad = fitcdiscr(trainSet,trainLabels,'DiscrimType','diagquadratic');
-errorDiagQuad = trainTestError( trainSet, trainLabels, testSet, testLabels, classifierDiagQuad, ratio )
+%% Again with different classifier types
 
-%Quadratic
-classifierQuad = fitcdiscr(reducedTrainSet,trainLabels,'DiscrimType','quadratic');
-errorQuad = trainTestError( reducedTrainSet, trainLabels, reducedTestSet, testLabels, classifierQuad, ratio )
+classifierTypes = ["linear", "diagquadratic"]; % quadratic not used because SINGULAR matrix
+trainingErrors = [];
+testingErrors = [];
 
-%- Would we still choose the same classifier ? -> linear has errors ~= 0.03 
-%- Yes : linear
-classifierLin = fitcdiscr(trainSet,trainLabels,'DiscrimType','linear');
-errorLinTest = trainTestError(testSet, testLabels, testSet, testLabels, classifierLin, ratio )
-%- Improvement on training error does not improve testing error as...
-%- Can't use quadratic : covariance matrix is SINGULAR i.e. not invertible
+% Comparison train and test errors
+for i=1:length(classifierTypes)
+    classifier = fitcdiscr(set1, labels1, 'DiscrimType', char(classifierTypes(i)));
+    yhatDiagLin = predict(classifier, set1);
+    trainingErrors(i) = computeClassError(labels1, yhatDiagLin);
+    testingErrors(i) = computeClassError(labels2, yhatDiagLin);
+end
 
-%Complexity - number of parameters
-%Diaglinear:
-%Linear:
-%Diagquadratic:
-%Number of training samples:
-%- Are these classifiers robust ?
+%Display
+trainingErrors, testingErrors
 
-
-%% Again but revert set1 & set2 : training on set 2
-%Notive the performance variability 
+% -We would still choose LINEAR because error is 0.
+% -In addition, improvement on training error not reflected in testing error
+% because UNSEEN data set ? 
+% -Robustness of classifiers and number of parameters:
 
 
+%% Training and testing error, but TRAIN on set2
 
+% Comparison train and test errors
+classifierDiagLin = fitcdiscr(set2, labels2, 'DiscrimType','diaglinear');
+yhatDiagLin = predict(classifierDiagLin, set1);
+trainingError = computeClassError(labels1, yhatDiagLin)
+testingError = computeClassError(labels2, yhatDiagLin)
+
+%Different performance: training and testing errors both greater than when
+%trained on set1. 
+
+%% Modify prior to UNIFORM
+
+% Comparison train and test errors
+classifierDiagLin = fitcdiscr(set2, labels2, 'DiscrimType','diaglinear', 'Prior', 'uniform');
+yhatDiagLin = predict(classifierDiagLin, set1);
+trainingError = computeClassError(labels1, yhatDiagLin)
+testingError = computeClassError(labels2, yhatDiagLin)
+
+%Different performance: training and testing errors EVEN greater with UNIFORM.
+
+%% Kaggle 
+%choose classifier and subsets
+%make prediction on testData
+filename = 'guidesheet2_diaglin_empirical_trainonset1.csv';
+folder = pwd;
+labelToCSV(yhat, filename, folder);
+
+%Bad scores because seen data
 %% Cross validation for performance estimation
 
 %Param.
 N = size(trainData,1); %597
 k = 10; %or we could set it up to 6 as we have ~600 samples, so size(subset)=100...?
 
-%1. Partition comparison
+%% 1. Partition comparison
 
 cp_N = cvpartition(N, 'kfold', k)
 cp_labels = cvpartition(trainLabels, 'kfold', k)
 
 %Samples per class and per fold :
-% cp_N: 1843-1844 per fold (per class)
-% cp_labels: 269-270 per fold
-% Would use cp_N because MORE DATA.
+% cp_N: 538-637 per fold
+% cp_labels: same
+% Would use cp_labels because takes into account class distributino ! 
 
 
-%2. k-fold cross validation
+%% 2. k-fold cross validation
 errorLinTest = zeros(cp_labels.NumTestSets,1);
 for i = 1:cp_labels.NumTestSets
     trainId = cp_labels.training(i); %marks training samples with 1
@@ -200,7 +193,7 @@ meanError = mean(errorLinTest,1)
 stdError = std(errorLinTest) %Stability of performance : standard deviation of cross-validation error
 
 
-%3. Repeat with reparition(cp)
+%% 3. Repeat with repartition(cp)
 errorLinTest2 = zeros(cp_labels.NumTestSets,1);
 for i = 1:cp_labels.NumTestSets
     cp_labels=repartition(cp_labels); %just rerandomizes, doesn't provide diff. performance
@@ -216,7 +209,7 @@ meanError_2 = mean(errorLinTest2,1)
 %Stability of performance : standard deviation of cross-validation error
 stdError_2 = std(errorLinTest2)
 
-% -No changes using repartition(cp_N). OK.
+% -No big changes using repartition(cp_N): 0.03. OK.
 % -Why: repartition only rerandomize the partition -> should not affect
 % result by much
 % -Advantages of varying or similar classification performances : if
