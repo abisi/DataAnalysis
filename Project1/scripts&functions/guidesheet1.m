@@ -245,7 +245,7 @@ testD=zeros(1,199);
 predictionVector=computePrediction(testData, 712, bestThreshold); %testData
 filename='submissionGuidesheet1-3.csv'; 
 %FID=fopen('filename');
-folder='C:\Users\Gianni\Documents\GitHub\DataAnalysis\Project1';
+folder=pwd; %pwd gives the local folder!
 labelToCSV(testD', filename, folder);
 %% Multi-dimensional submission
 ratio = 0.5;%Important because used to determine optimal feature thresholds (class error minimization)

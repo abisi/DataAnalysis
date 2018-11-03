@@ -3,6 +3,7 @@ clear all;
 load('../data/trainSet.mat');
 load('../data/trainLabels.mat');
 
+% Principal Component Analysis
 [coeff,score,variance]=pca(trainData);
 
 priorCov=cov(trainData);
