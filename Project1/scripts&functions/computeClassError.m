@@ -8,7 +8,7 @@ function [error, accur] = computeClassError(labels, prediction)
 
 
 % Ratio of correct '0'
-ratio = length((find(labels == 0))) / length(labels);
+ratio = 0.5;
 % Error counters:
 correctClassError = 0;
 errorClassError = 0;

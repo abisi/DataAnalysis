@@ -115,8 +115,8 @@ for i=1:kOuter
             classifier = fitcdiscr(trainingSet(:,selectedFeatures), trainingLabels, 'DiscrimType', 'diaglinear','Prior',Priors);
             prediction=predict(classifier, validationSet(:,selectedFeatures));
             trainingPrediction=predict(classifier, trainingSet(:,selectedFeatures));
-            validationError = computeClassError(validationLabels,prediction,0.5);
-            trainingError= computeClassError(trainingLabels,trainingPrediction,0.5);
+            validationError = computeClassError(validationLabels,prediction);
+            trainingError= computeClassError(trainingLabels,trainingPrediction);
             validationErrorStorage(q,t)=validationError;
             innerTrainingErrorStorage(q,t)=trainingError;
         end
@@ -131,9 +131,15 @@ for i=1:kOuter
     selectedFeatures=ftIndex(1:optimal_nFeatures);
     optimalModel = fitcdiscr(outerTrainingSet(:,selectedFeatures), outerTrainingLabels, 'DiscrimType', 'diaglinear','Prior',Priors);
     prediction=predict(optimalModel, testSet(:,selectedFeatures));
-    testError = computeClassError(testLabels,prediction, 0.5); 
+    testError = computeClassError(testLabels,prediction); 
     testErrorStorage(1,i)=testError;
 end
+
+%Fin de NCV.
+
+%% CV
+
+
 %% Subsequent questions
 % How does hyperparameter differ across folds?
 optimalHyperParamStorage
