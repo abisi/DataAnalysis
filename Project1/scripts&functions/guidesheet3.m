@@ -31,8 +31,8 @@ optimalHyperParamStorage=0;
             classifier = fitcdiscr(trainingSet(:,selectedFeatures), trainingLabels, 'DiscrimType', 'diaglinear','Prior', Priors);
             prediction=predict(classifier, testSet(:,selectedFeatures));
             trainingPrediction=predict(classifier, trainingSet(:,selectedFeatures));
-            testError = computeClassError(testLabels,prediction,0.5);
-            trainingError= computeClassError(trainingLabels,trainingPrediction,0.5);
+            testError = computeClassError(testLabels,prediction);
+            trainingError= computeClassError(trainingLabels,trainingPrediction);
             testErrorStorage(q,t)=testError;
             trainingErrorStorage(q,t)=trainingError;
         end
