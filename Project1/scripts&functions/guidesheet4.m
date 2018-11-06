@@ -8,13 +8,20 @@ load('../data/trainLabels.mat');
 
 priorCov=cov(trainData);
 postCov=cov(score);
-%imshow(postCov);
+figure;
+imshow(priorCov, [0, 0.01]);
+figure;
+imagesc(priorCov, [0, 0.01]);
+colorbar;
+title('Covariance matrix of the train data');
+
+%We can observe the 16 EEG channels (clearly separated on the cov matrix).
+%The pattern give us information about the correlation between samples.
 
 diagPriorCov=diag(priorCov);
 diagPostCov=diag(postCov);
 
 meanPriorVar=mean(diagPriorCov);
-
 meanPostVar=mean(diagPostCov);
 
 %Maximum covariance values original data vs transformed data
@@ -42,6 +49,7 @@ maxPostCov=max(max(postOffDiag));
 % PCs as Hyperparameters
 cumVar=cumsum(variance)/sum(variance);
 numPC=1:length(variance);
+figure;
 plot(numPC, cumVar, 'r'); hold on;
 xlabel('Number of PCs');
 ylabel('Percentage of the total variance');
