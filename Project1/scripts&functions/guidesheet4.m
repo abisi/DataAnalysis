@@ -8,12 +8,16 @@ load('../data/trainLabels.mat');
 
 priorCov=cov(trainData);
 postCov=cov(score);
-figure;
-imshow(priorCov, [0, 0.01]);
+%figure;
+%imshow(priorCov, [0, 0.01]);
 figure;
 imagesc(priorCov, [0, 0.01]);
 colorbar;
 title('Covariance matrix of the train data');
+
+figure;
+imagesc(postCov, [0, 3e-18]);
+title('Covariance matrix of the transformed data');
 
 %We can observe the 16 EEG channels (clearly separated on the cov matrix).
 %The pattern give us information about the correlation between samples.
@@ -62,7 +66,60 @@ set(threshold90,'LineWidth',1,'color','blue');
 
 
 %% PCA and cross-validation
+clear all;
+load('../data/trainSet.mat');
+load('../data/trainLabels.mat');
 
+%Simple corss-validation loop with fix classifier for now! (diaglin)
+Priors.ClassNames=[0 1];
+Priors.ClassProbs=[0.7 0.3];
+k=10;
+nObservations=length(trainLabels);
+Nmax=200; %number of PCs
+
+trainErrorStorage=zeros(Nmax,k);
+testErrorStorage=zeros(Nmax,k);
+optimalHyperParamStorage=0; %number of Principal components to obtain 90% total variance.
+
+[coeff, score, variance]=pca(trainData); %As we're working with transformed features, we have to do it before
+
+    for t=1:k
+        partition = cvpartition(nObservations, 'kfold', k); %les data transformés ont toujours 597 observations
+        
+        trainMarker=partition.training(t);
+        testMarker=partition.test(t);
+        %trainingSet=trainData(trainingMarker, :);
+        trainSet=score(trainMarker,:); %nouveaux features
+        trainingLabels=trainLabels(trainMarker, :); %vrais labels associés ne changent pas.     
+        
+        testSet=score(testMarker, :);
+        testLabels=trainLabels(testMarker,:);
+        
+        for N=1:Nmax                        
+            selectedComponents=score(:, 1:N); %Components are classified by importance order.
+                       
+            classifier = fitcdiscr(trainSet(:, 1:N), trainingLabels, 'DiscrimType', 'diaglinear', 'Prior', Priors); %ne plus utiliser training set comme notre set a été modifié non?
+            
+            trainPrediction=predict(classifier, trainSet(:, 1:N));
+            testPrediction=predict(classifier, testSet(:, 1:N));
+                   
+            trainError=computeClassError(trainPrediction, trainingLabels);
+            testError=computeClassError(testPrediction, testLabels);
+            
+            trainErrorStorage(N,t)=trainError;
+            testErrorStorage(N,t)=testError;
+        end
+    end
+
+%Compute average errors > mean makes the mean on columns
+meanTrainError=(mean(trainErrorStorage'))'; %la 2e transposée nous permet de retrouver la forme vecteur ligne
+meanTestError=(mean(testErrorStorage'))';
+
+figure;
+plot(1:Nmax, meanTrainError, 'g', 1:Nmax, meanTestError, 'r');
+xlabel('N'); %number of principal compnonents
+ylabel('Error');
+legend('Train error', 'Test error');
 
 
 %% Forward Feature Selection
