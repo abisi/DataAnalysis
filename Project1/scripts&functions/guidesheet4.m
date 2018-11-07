@@ -88,8 +88,8 @@ optimalHyperParamStorage=0; %number of Principal components to obtain 90% total 
         
         trainMarker=partition.training(t);
         testMarker=partition.test(t);
-        %trainingSet=trainData(trainingMarker, :);
-        trainSet=score(trainMarker,:); %nouveaux features
+        
+        trainSet=score(trainMarker,:); %new features
         trainingLabels=trainLabels(trainMarker, :); %vrais labels associés ne changent pas.     
         
         testSet=score(testMarker, :);
@@ -98,7 +98,7 @@ optimalHyperParamStorage=0; %number of Principal components to obtain 90% total 
         for N=1:Nmax                        
             selectedComponents=score(:, 1:N); %Components are classified by importance order.
                        
-            classifier = fitcdiscr(trainSet(:, 1:N), trainingLabels, 'DiscrimType', 'diaglinear', 'Prior', Priors); %ne plus utiliser training set comme notre set a été modifié non?
+            classifier = fitcdiscr(trainSet(:, 1:N), trainingLabels, 'DiscrimType', 'diaglinear', 'Prior', Priors); 
             
             trainPrediction=predict(classifier, trainSet(:, 1:N));
             testPrediction=predict(classifier, testSet(:, 1:N));
@@ -112,14 +112,15 @@ optimalHyperParamStorage=0; %number of Principal components to obtain 90% total 
     end
 
 %Compute average errors > mean makes the mean on columns
-meanTrainError=(mean(trainErrorStorage'))'; %la 2e transposée nous permet de retrouver la forme vecteur ligne
+meanTrainError=(mean(trainErrorStorage'))';
 meanTestError=(mean(testErrorStorage'))';
 
 figure;
 plot(1:Nmax, meanTrainError, 'g', 1:Nmax, meanTestError, 'r');
-xlabel('N'); %number of principal compnonents
+xlabel('N'); %number of principal components
 ylabel('Error');
 legend('Train error', 'Test error');
+
 
 
 %% Forward Feature Selection
