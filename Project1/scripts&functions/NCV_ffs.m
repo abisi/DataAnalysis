@@ -1,4 +1,4 @@
-%% Nested cross-validation; feature ranking using fisher ; hyperParams: nbFeatures
+%% Nested cross-validation; feature ranking using fisher ; hyperParams: nbFeatures 
 clear all;
 load('../data/trainSet.mat');
 load('../data/trainLabels.mat');
