@@ -81,7 +81,13 @@ trainErrorStorage=zeros(Nmax,k);
 testErrorStorage=zeros(Nmax,k);
 optimalHyperParamStorage=0; %number of Principal components to obtain 90% total variance.
 
+%Normalize data before applying PCA
+%trainData=zscore(trainData);
+
 [coeff, score, variance]=pca(trainData); %As we're working with transformed features, we have to do it before
+
+%Normalize the transformed data (after PCA)
+%score=zscore(score);
 
     for t=1:k
         partition = cvpartition(nObservations, 'kfold', k); %les data transformés ont toujours 597 observations
