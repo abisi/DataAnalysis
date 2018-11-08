@@ -135,7 +135,6 @@ classifiertype='diaglinear';
 k=10;
 ratio=0.5;
 
-
 selectionCriteria = @(xT,yT,xt,yt) length(yt)*(computeClassError(yt,predict(fitcdiscr(xT,yT,'discrimtype', classifiertype, 'Prior', Priors), xt)));
 opt = statset('Display','iter','MaxIter',100);
 cp=cvpartition(trainLabels(1:10:end, :),'kfold',k);
