@@ -151,15 +151,17 @@ Priors.ClassNames=[0 1];
 Priors.ClassProbs=[0.7 0.3];
 
 classifiertype='diaglinear';
-k=10;
-ratio=0.5;
-
+k=4;
 
 selectionCriteria = @(xT,yT,xt,yt) length(yt)*(computeClassError(yt,predict(fitcdiscr(xT,yT,'discrimtype', classifiertype, 'Prior', Priors), xt)));
 opt = statset('Display','iter','MaxIter',100);
-cp=cvpartition(trainLabels(1:10:end, :),'kfold',k);
 
-[sel,hst] = sequentialfs(selectionCriteria,trainData(1:10:end,:),trainLabels(1:10:end, :),'cv',cp,'options',opt);
+trainLabels=trainLabels(1:20:end,:);
+trainData=trainData(1:20:end,:);
+
+cp=cvpartition(trainLabels,'kfold',k);
+
+[sel,hst] = sequentialfs(selectionCriteria,trainData,trainLabels,'cv',cp,'options',opt);
 
 %% Nested cross-valiation using FFF instead of rankfeat
 
