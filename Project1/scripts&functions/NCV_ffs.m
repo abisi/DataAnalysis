@@ -5,8 +5,8 @@ load('../data/trainSet.mat');
 load('../data/trainLabels.mat');
 
 %reducing data dimensionnality by a factor of 10
-trainData=trainData(1:10:end,:);
-trainLabels=trainLabels(1:10:end,:);
+trainData=trainData(:,1:10:end);
+trainLabels=trainLabels(:,1:10:end);
 
 %priors struct:  we need to specify priors when fitting models to data
 %where class frequencies are unknown
