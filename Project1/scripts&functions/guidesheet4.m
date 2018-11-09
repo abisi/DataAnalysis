@@ -37,7 +37,7 @@ maxPostCov=max(max(postOffDiag));
 % we can notice the (huge) decrease in covariance between the 2 (0.0360
 % against 1.43e-15)
 
-%PCA maximise the variance in order to get rid off low-variance dimensions.
+%PCA maximises the variance in order to get rid off low-variance dimensions.
 %Therefore, we observe that the diagonal of the data (before and after
 %tranformation), which corresponds to variance, is larger for the
 %transformed data (referred as post).
@@ -50,7 +50,7 @@ maxPostCov=max(max(postOffDiag));
 %carry maximum information. Each PC represent a decrease in the system's
 %entropy.
 
-% PCs as Hyperparameters
+% PCs as Hyperparameters: 
 cumVar=cumsum(variance)/sum(variance);
 numPC=1:length(variance);
 figure;
@@ -64,18 +64,22 @@ pc90=numPC(idx90(1));
 threshold90=line([pc90 pc90], [0 1]);
 set(threshold90,'LineWidth',1,'color','blue');
 
+%Let's find minimum distance 
+%Point of 'diminishing returns': where little variance is gained
+%distance = sqrt((numPC - zeros(1,length(numPC))).^2 + (cumVar' - ones(1, length(cumVar))).^2);
+%[minDistance, idxDistance] = min(distance);
 
 %% PCA and cross-validation
 clear all;
 load('../data/trainSet.mat');
 load('../data/trainLabels.mat');
 
-%Simple corss-validation loop with fix classifier for now! (diaglin)
+%Simple cross-validation loop with fix classifier for now! (diaglin)
 Priors.ClassNames=[0 1];
 Priors.ClassProbs=[0.7 0.3];
-k=10;
+k=5;
 nObservations=length(trainLabels);
-Nmax=200; %number of PCs
+Nmax=250; % max number of PCs 
 
 trainErrorStorage=zeros(Nmax,k);
 testErrorStorage=zeros(Nmax,k);
@@ -128,6 +132,21 @@ ylabel('Error');
 legend('Train error', 'Test error');
 
 
+%% PCA model - all the data
+%Let's say
+N = 108
+%Missing data
+augmentedData = vertcat(trainData, trainData, trainData, trainData);
+%PCA
+[coeff, score, variance]=pca(augmentedData); %As we're working with transformed features, we have to do it before
+for i=1:length(coeff)
+    if i > N 
+        coeff(i) = 0;
+    end
+end
+
+dataInPCASpace = coeff*augmentedData;
+classifier = fitcdiscr(dataInPCASpace, labels, 'DiscrimType','diaglin');
 
 %% Forward Feature Selection
 clear all;
@@ -138,15 +157,17 @@ Priors.ClassNames=[0 1];
 Priors.ClassProbs=[0.7 0.3];
 
 classifiertype='diaglinear';
-k=10;
-ratio=0.5;
-
+k=4;
 
 selectionCriteria = @(xT,yT,xt,yt) length(yt)*(computeClassError(yt,predict(fitcdiscr(xT,yT,'discrimtype', classifiertype, 'Prior', Priors), xt)));
 opt = statset('Display','iter','MaxIter',100);
-cp=cvpartition(trainLabels(1:10:end, :),'kfold',k);
 
-[sel,hst] = sequentialfs(selectionCriteria,trainData(1:10:end,:),trainLabels(1:10:end, :),'cv',cp,'options',opt);
+trainLabels=trainLabels(1:20:end,:);
+trainData=trainData(1:20:end,:);
+
+cp=cvpartition(trainLabels,'kfold',k);
+
+[sel,hst] = sequentialfs(selectionCriteria,trainData,trainLabels,'cv',cp,'options',opt);
 
 %% Nested cross-valiation using FFF instead of rankfeat
 
