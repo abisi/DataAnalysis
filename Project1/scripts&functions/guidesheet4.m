@@ -66,8 +66,8 @@ set(threshold90,'LineWidth',1,'color','blue');
 
 %Let's find minimum distance 
 %Point of 'diminishing returns': where little variance is gained
-distance = sqrt((numPC - zeros(1,length(numPC))).^2 + (cumVar' - ones(1, length(cumVar))).^2);
-[minDistance, idxDistance] = min(distance);
+%distance = sqrt((numPC - zeros(1,length(numPC))).^2 + (cumVar' - ones(1, length(cumVar))).^2);
+%[minDistance, idxDistance] = min(distance);
 
 %% PCA and cross-validation
 clear all;
@@ -79,7 +79,7 @@ Priors.ClassNames=[0 1];
 Priors.ClassProbs=[0.7 0.3];
 k=5;
 nObservations=length(trainLabels);
-Nmax=250; %number of PCs
+Nmax=250; % max number of PCs 
 
 trainErrorStorage=zeros(Nmax,k);
 testErrorStorage=zeros(Nmax,k);
