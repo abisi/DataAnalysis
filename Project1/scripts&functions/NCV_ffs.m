@@ -27,7 +27,7 @@ Quad.OptimalFeatures=zeros(1,kOuter);
 
 %Storage for validation error of optimal model determined using foward
 %feature selection on training section of outer partition. Vector of length
-%kOuter (one entry per outer fold cycle).
+%kOuter (one optimal validation error per outer fold cycle).
 DiagLin.OptimalValidationError=zeros(1,kOuter);
 Lin.OptimalValidationError=zeros(1,kOuter);
 DiagQuad.OptimalValidationError=zeros(1,kOuter);
