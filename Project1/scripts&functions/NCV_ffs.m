@@ -18,12 +18,12 @@ kOuter=3;
 kInner=4;
 
 %Storage for features of optimal model determined using foward feature
-%selection on training section of outer partition. Vector of length kOuter
-%(one entry per outer fold cycle).
-DiagLin.OptimalFeatures=zeros(1,kOuter);
-Lin.OptimalFeatures=zeros(1,kOuter);
-DiagQuad.OptimalFeatures=zeros(1,kOuter);
-Quad.OptimalFeatures=zeros(1,kOuter);
+%selection on training section of outer partition. Cell array of vectors
+%(one vector added per outer fold cycle).
+DiagLin.OptimalFeatures={};
+Lin.OptimalFeatures={};
+DiagQuad.OptimalFeatures={};
+Quad.OptimalFeatures={};
 
 %Storage for validation error of optimal model determined using foward
 %feature selection on training section of outer partition. Vector of length
@@ -85,10 +85,10 @@ for i=1:kOuter
     [Q_sel,Q_hst] = sequentialfs(Q_selectionCriteria,outerTrainingSet,outerTrainingLabels,'cv',cp,'options',opt);
     
     %compute and save optimal features for each model
-    DiagLin.OptimalFeatures(1,i)=find(dL_sel);
-    Lin.OptimalFeatures(1,i)=find(L_sel);
-    DiagQuad.OptimalFeatures(1,i)=find(dQ_sel);
-    Quad.OptimalFeatures(1,i)=find(Q_sel);
+    DiagLin.OptimalFeatures{i}=find(dL_sel);
+    Lin.OptimalFeatures{i}=find(L_sel);
+    DiagQuad.OptimalFeatures{i}=find(dQ_sel);
+    Quad.OptimalFeatures{i}=find(Q_sel);
     
     %compute and save optimal validation error for each model
     DiagLin.OptimalValidationError(1,i)=dL_hst.Crit(end);
@@ -97,17 +97,17 @@ for i=1:kOuter
     Quad.OptimalValidationError(1,i)=Q_hst.Crit(end);
     
     %build optimal models
-    optimalDiagLinearClassifier = fitcdiscr(outerTrainingSet(:,DiagLin.OptimalFeatures), outerTrainingLabels, 'DiscrimType', 'diaglinear','Prior',Priors);
-    optimalLinearClassifier = fitcdiscr(outerTrainingSet(:,Lin.OptimalFeatures), outerTrainingLabels, 'DiscrimType', 'linear','Prior',Priors);
-    optimalDiagQuadraticClassifier = fitcdiscr(outerTrainingSet(:,DiagQuad.OptimalFeatures), outerTrainingLabels, 'DiscrimType', 'diagQuadratic','Prior',Priors);
-    optimalQuadraticClassifier = fitcdiscr(outerTrainingSet(:,Quad.OptimalFeatures), outerTrainingLabels, 'DiscrimType', 'quadratic','Prior',Priors);
+    optimalDiagLinearClassifier = fitcdiscr(outerTrainingSet(:,DiagLin.OptimalFeatures{i}), outerTrainingLabels, 'DiscrimType', 'diaglinear','Prior',Priors);
+    optimalLinearClassifier = fitcdiscr(outerTrainingSet(:,Lin.OptimalFeatures{i}), outerTrainingLabels, 'DiscrimType', 'linear','Prior',Priors);
+    optimalDiagQuadraticClassifier = fitcdiscr(outerTrainingSet(:,DiagQuad.OptimalFeatures{i}), outerTrainingLabels, 'DiscrimType', 'diagQuadratic','Prior',Priors);
+    optimalQuadraticClassifier = fitcdiscr(outerTrainingSet(:,Quad.OptimalFeatures{i}), outerTrainingLabels, 'DiscrimType', 'quadratic','Prior',Priors);
   
     %compute predicted classifications for test section data using optimal
     %models
-    dL_prediction=predict(optimalDiagLinearClassifier, testSet(:,DiagLin.OptimalFeatures));
-    L_prediction=predict(optimalLinearClassifier, testSet(:,Lin.OptimalFeatures));
-    dQ_prediction=predict(optimalDiagQuadraticClassifier, testSet(:,DiagQuad.OptimalFeatures));
-    Q_prediction=predict(optimalQuadraticClassifier, testSet(:,Quad.OptimalFeatures));
+    dL_prediction=predict(optimalDiagLinearClassifier, testSet(:,DiagLin.OptimalFeatures{i}));
+    L_prediction=predict(optimalLinearClassifier, testSet(:,Lin.OptimalFeatures{i}));
+    dQ_prediction=predict(optimalDiagQuadraticClassifier, testSet(:,DiagQuad.OptimalFeatures{i}));
+    Q_prediction=predict(optimalQuadraticClassifier, testSet(:,Quad.OptimalFeatures{i}));
     
     %compute and save test errors for each model
     DiagLin.TestError(1,i) = computeClassError(testLabels,dL_prediction);
