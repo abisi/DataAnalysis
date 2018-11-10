@@ -4,18 +4,21 @@ clear all;
 load('../data/trainSet.mat');
 load('../data/trainLabels.mat');
 
+%Normalize
+trainData=zscore(trainData);
+
 %priors struct:  we need to specify priors when fitting models to data
 %where class frequencies are unknown
 Priors.ClassNames=[0 1];
-Priors.ClassProbs=[0.7 0.3];
+Priors.ClassProbs=[2/3 1/3];
 
 %outer/inner fold counts
-kOuter=3;
-kInner=4;
+kOuter=4;
+kInner=5;
 
 %observation count, upper threashold for nbFeatures hyperParam
 nObservations=length(trainLabels);
-maxN_features=200;
+maxN_features=300;
 
 %Storage for training errors of models evaluated in inner fold cycles;
 %models are differentiated based on how they are trained and nbFeatures.
@@ -232,3 +235,16 @@ for i=1:kOuter
     Lin.TestErrorStorage(1,i)=L_testError;
     DiagQuad.TestErrorStorage(1,i)=dQ_testError;
 end
+
+
+%% Choice
+
+DiagLin.TestErrorStorage
+Lin.TestErrorStorage
+DiagQuad.TestErrorStorage
+
+meanErrors = [mean(DiagLin.TestErrorStorage), mean(Lin.TestErrorStorage), mean(DiagQuad.TestErrorStorage) ]
+
+DiagLin.OptimalHyperParamStorage
+Lin.OptimalHyperParamStorage
+DiagQuad.OptimalHyperParamStorage
