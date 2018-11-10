@@ -7,7 +7,7 @@ load('../data/trainLabels.mat');
 Priors.ClassNames=[0 1];
 Priors.ClassProbs=[0.7 0.3];
 
-kin=4;
+kin=5;
 nObservations=length(trainLabels);
 Nmax=200; %number of PCs
 
@@ -15,7 +15,7 @@ Nmax=200; %number of PCs
 trainErrorStorage=zeros(Nmax,kin);
 validationErrorStorage=zeros(Nmax,kin);
 
-kout=3;
+kout=4;
 
 %Erreur finale calculée pour évaluer la PERF du modèle (!!!)
 testErrorStorage=zeros(1,kout);
@@ -27,8 +27,14 @@ optimalComponentsNumber=zeros(1, kout);
 minMeanTrainError=zeros(1, kout);
 minMeanValidationError=zeros(1, kout);
 
+%Normalize data before applying PCA
+%trainData=zscore(trainData);
+
 %Time for PCA
 [coeff, score, variance]=pca(trainData); %As we're working with transformed features, we have to do it before
+
+%Normalize the transformed data (after PCA)
+score=zscore(score);
 
 partitionOut=cvpartition(nObservations, 'kfold', kout); %same dimension of score and trainLabels (597 lines)
 
