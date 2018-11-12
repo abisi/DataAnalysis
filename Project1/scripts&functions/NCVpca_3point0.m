@@ -17,7 +17,7 @@ validationErrorStorage=zeros(Nmax,kin);
 
 kout=4;
 
-%Erreur finale calculée pour évaluer la PERF du modèle
+%Test error for performance evaluation
 testErrorStorage=zeros(1,kout);
 
 %Nombre de components N optimal
@@ -55,7 +55,7 @@ for i=1:kout
         innerTrainLabels=outerTrainLabels(innerTrainIds, :);
         
         %Validation set + labels
-        innerValidationSet=outerTrainSet(innerValidationIds, :); %inner test set = validation set
+        innerValidationSet=outerTrainSet(innerValidationIds, :); 
         innerValidationLabels=outerTrainLabels(innerValidationIds, :);
         
         %Normalise both the train + validation set
@@ -88,10 +88,8 @@ for i=1:kout
     end
 
     %Compute MEAN errors of previous section (inner)
-    meanTrainError=mean(trainErrorStorage, 2); %2 specifies mean on rows
+    meanTrainError=mean(trainErrorStorage, 2);
     meanValidationError=mean(validationErrorStorage, 2);
-        %stocker éventuellement meanTrainError = meanInnerTrainError
-        %stocker éventuellement meanValidationError
     
     %Find the min error and the corresponding value
     [minValidationError, minValidationErrorIdx]=min(meanValidationError);
@@ -99,7 +97,7 @@ for i=1:kout
     %minimum mean TRAINING error
     minMeanTrainError(1,i)=min(meanTrainError);    
     
-    %minimum mean VALIDATION error > on la stocke quand même
+    %minimum mean VALIDATION error
     minMeanValidationError(1,i)=minValidationError;
        
     %Find the optimal NUMBER OF COMPONENTS N with the index of the min error
