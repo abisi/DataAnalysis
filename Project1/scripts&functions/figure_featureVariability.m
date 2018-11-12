@@ -1,5 +1,5 @@
 %% PART 1 : Statistical significance
-%% Feature Variability figure
+%% Feature Variability 
 close all;
 clear all;
 load('../data/trainSet.mat');
@@ -21,9 +21,9 @@ y=ylim;
 threshold=line([0.505 0.505], [y(1) y(2)]);
 set(threshold,'LineWidth',3,'color',c3);
 legend('Correct', 'Error', 'Threshold');
-xlabel('Signal amplitude');
-ylabel('Normalized proportion');
-title('Normalized distribution of correct and error related ERPs (feature 650)');
+xlabel('Signal amplitude', 'FontSize', 11);
+ylabel('Normalized proportion', 'FontSize', 11);
+title({'Feature 650:'; 'Distribution of correct and error related ERPs'}, 'FontSize', 14);
 
 %Class histograms for feature 712 with threshold
 subplot(2,2,2);
@@ -35,9 +35,9 @@ y=ylim;
 threshold=line([0.64 0.64], [y(1) y(2)]);
 set(threshold,'LineWidth',3,'color',c3);
 legend('Correct', 'Error', 'Threshold');
-xlabel('Signal amplitude');
-ylabel('Normalized proportion');
-title('Normalized distribution of correct and error related ERPs (feature 712)');
+xlabel('Signal amplitude', 'FontSize', 11);
+ylabel('Normalized proportion', 'FontSize', 11);
+title({'Feature 712:'; 'Distribution of correct and error related ERPs' }, 'FontSize', 14);
 
 %Class histograms help us to optimally place threshold because we can
 %minimize false classifications by placing threshold at intersection of
@@ -56,8 +56,10 @@ subplot(2,2,3);
 boxplot(trainData(:,650),groupingMatrix, 'Notch', 'on','Colors','k');
 set(findobj(gcf,'Tag','Median'),'Color',c3);
 set(findobj(gcf,'Tag','Outliers'),'MarkerEdgeColor','k');
-set(gca,'XTickLabel',{'Correct','Error'});
-title('Feature 650 boxplot for correct and error related ERPs');
+set(gca,'XTickLabel',{'Correct','Error'}, 'FontSize', 11);
+ylabel('Amplitude', 'FontSize', 11);
+title({'Feature 650:'; 'Correct and error related ERPs'}, 'FontSize', 14);
+
 
 %confidence intervals for respective means appear distinct. We suspect that
 %classes display significantly different data distributions @feature 712.
@@ -65,8 +67,9 @@ subplot(2,2,4);
 boxplot(trainData(:,712), groupingMatrix, 'Notch', 'on','Colors','k');
 set(findobj(gcf,'Tag','Median'),'Color',c3);
 set(findobj(gcf,'Tag','Outliers'),'MarkerEdgeColor','k');
-set(gca,'XTickLabel',{'Correct','Error'});
-title('Feature 712 boxplot for correct and error related ERPs');
+set(gca,'XTickLabel',{'Correct','Error'}, 'FontSize', 11);
+ylabel('Amplitude', 'FontSize', 11);
+title({'Feature 712:'; 'Correct and error related ERPs'}, 'FontSize', 14);
 
 
 
