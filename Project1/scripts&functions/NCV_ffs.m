@@ -10,11 +10,6 @@ trainLabels=trainLabels(:,1:5:end);
 
 trainData=zscore(trainData);
 
-%Priors struct:  we need to specify priors when fitting models to data
-%where class frequencies are unknown
-%Priors.ClassNames=[0 1];
-%Priors.ClassProbs=[0.7 0.3];
-
 %Outer/inner fold counts
 kOuter=3;
 kInner=4;
@@ -65,10 +60,10 @@ for i=1:kOuter
     nOuterTrainingSet=size(outerTrainingSet,1);
     
     %selection criteria & ffs parameters
-    dL_selectionCriteria = @(xT,yT,xt,yt) length(yt)*(computeClassError(yt,predict(fitcdiscr(xT,yT,'discrimtype', 'diagLinear'), xt)));
-    L_selectionCriteria = @(xT,yT,xt,yt) length(yt)*(computeClassError(yt,predict(fitcdiscr(xT,yT,'discrimtype', 'linear'), xt)));
-    dQ_selectionCriteria = @(xT,yT,xt,yt) length(yt)*(computeClassError(yt,predict(fitcdiscr(xT,yT,'discrimtype', 'diagquadratic'), xt)));
-    Q_selectionCriteria = @(xT,yT,xt,yt) length(yt)*(computeClassError(yt,predict(fitcdiscr(xT,yT,'discrimtype', 'quadratic'), xt)));
+    dL_selectionCriteria = @(xT,yT,xt,yt) length(yt)*(computeClassError(yt,predict(fitcdiscr(xT,yT,'discrimtype', 'diagLinear','Prior','uniform'), xt)));
+    L_selectionCriteria = @(xT,yT,xt,yt) length(yt)*(computeClassError(yt,predict(fitcdiscr(xT,yT,'discrimtype', 'linear', 'Prior','uniform'), xt)));
+    dQ_selectionCriteria = @(xT,yT,xt,yt) length(yt)*(computeClassError(yt,predict(fitcdiscr(xT,yT,'discrimtype', 'diagquadratic', 'Prior','uniform'), xt)));
+    Q_selectionCriteria = @(xT,yT,xt,yt) length(yt)*(computeClassError(yt,predict(fitcdiscr(xT,yT,'discrimtype', 'quadratic', 'Prior','uniform'), xt)));
     opt = statset('Display','iter','MaxIter',100);
     
     %Partition for inner cross validation
@@ -117,18 +112,6 @@ for i=1:kOuter
    
   
 end
-
-%%  Choice of hyperparameters (Nsel, model type)
-meanModelErrors = [mean(DiagLin.TestError), mean(Lin.TestError), mean(DiagQuad.TestError), mean(Quad.TestError)];
-disp(meanModelErrors)
-%Model type:  
-%Nsel:  
-
-% Statistical significance - assuming error is normally distributed with
-% unknown variance
-%[h, pvalue] = ttest(....TestError, 0.5); 
-
-%Since pvalue < 0.05, we can rejet the null hypothesis (0.5).
 
 
 
