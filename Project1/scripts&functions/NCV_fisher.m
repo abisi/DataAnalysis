@@ -4,14 +4,6 @@ clear all;
 load('../data/trainSet.mat');
 load('../data/trainLabels.mat');
 
-%Normalize
-trainData=zscore(trainData);
-
-%priors struct:  we need to specify priors when fitting models to data
-%where class frequencies are unknown
-Priors.ClassNames=[0 1];
-Priors.ClassProbs=[2/3 1/3];
-
 %outer/inner fold counts
 kOuter=4;
 kInner=5;
@@ -125,9 +117,9 @@ for i=1:kOuter
             
             %train classifiers using selected features, we also specify
             %priors
-            diagLinearClassifier = fitcdiscr(innerTrainingSet(:,selectedFeatures), innerTrainingLabels, 'DiscrimType', 'diaglinear','Prior',Priors);
-            linearClassifier = fitcdiscr(innerTrainingSet(:,selectedFeatures), innerTrainingLabels, 'DiscrimType', 'linear','Prior',Priors);
-            diagQuadraticClassifier = fitcdiscr(innerTrainingSet(:,selectedFeatures), innerTrainingLabels, 'DiscrimType', 'diagquadratic','Prior',Priors);
+            diagLinearClassifier = fitcdiscr(innerTrainingSet(:,selectedFeatures), innerTrainingLabels, 'DiscrimType', 'diaglinear','Prior','uniform');
+            linearClassifier = fitcdiscr(innerTrainingSet(:,selectedFeatures), innerTrainingLabels, 'DiscrimType', 'linear','Prior','uniform');
+            diagQuadraticClassifier = fitcdiscr(innerTrainingSet(:,selectedFeatures), innerTrainingLabels, 'DiscrimType', 'diagquadratic','Prior','uniform');
             
             %use classifiers to predict classifications of
             %inner training section data
@@ -213,9 +205,9 @@ for i=1:kOuter
     dQ_selectedFeatures=orderedFeatureIndexes(1:dQ_optimal_nFeatures);
     
     %train optimal models using selected features; priors specification
-    dL_optimalModel = fitcdiscr(outerTrainingSet(:,dL_selectedFeatures), outerTrainingLabels, 'DiscrimType', 'linear','Prior',Priors);
-    L_optimalModel = fitcdiscr(outerTrainingSet(:,L_selectedFeatures), outerTrainingLabels, 'DiscrimType', 'linear','Prior',Priors);
-    dQ_optimalModel = fitcdiscr(outerTrainingSet(:,dQ_selectedFeatures), outerTrainingLabels, 'DiscrimType', 'linear','Prior',Priors);
+    dL_optimalModel = fitcdiscr(outerTrainingSet(:,dL_selectedFeatures), outerTrainingLabels, 'DiscrimType', 'linear','Prior','uniform');
+    L_optimalModel = fitcdiscr(outerTrainingSet(:,L_selectedFeatures), outerTrainingLabels, 'DiscrimType', 'linear','Prior','uniform');
+    dQ_optimalModel = fitcdiscr(outerTrainingSet(:,dQ_selectedFeatures), outerTrainingLabels, 'DiscrimType', 'linear','Prior','uniform');
     
     %compute optimal model classification prediction for test section of
     %outer partition
@@ -235,16 +227,3 @@ for i=1:kOuter
     Lin.TestErrorStorage(1,i)=L_testError;
     DiagQuad.TestErrorStorage(1,i)=dQ_testError;
 end
-
-
-%% Choice
-
-DiagLin.TestErrorStorage
-Lin.TestErrorStorage
-DiagQuad.TestErrorStorage
-
-meanErrors = [mean(DiagLin.TestErrorStorage), mean(Lin.TestErrorStorage), mean(DiagQuad.TestErrorStorage) ]
-
-DiagLin.OptimalHyperParamStorage
-Lin.OptimalHyperParamStorage
-DiagQuad.OptimalHyperParamStorage
