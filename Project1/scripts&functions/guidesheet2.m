@@ -13,7 +13,7 @@ labels=trainLabels;
 classificationErrors = []; 
 scores = [];
 %Feature subset
-features=trainData(:, 1:5:end);
+features=trainData(:, 1:50:end);
 %LDA/QDA
 classifierTypes = ["linear", "diaglinear", "diagquadratic"]; %"quadratic" not used because singular problem  
 

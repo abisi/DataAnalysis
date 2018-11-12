@@ -5,13 +5,13 @@ close all
 load('../data/trainSet.mat');
 load('../data/trainLabels.mat');
 
-%% Cross-validation for hyperparameter optimization
+%% Cross-validation for hyperparameter optimization / PCA
 
 Priors.ClassNames=[0 1];
 Priors.ClassProbs=[0.7 0.3];
 k=4;
 nObservations=length(trainLabels);
-maxN_features=10;
+maxN_features=550;
 
 trainingErrorStorage=zeros(maxN_features,k);
 testErrorStorage=zeros(maxN_features,k);

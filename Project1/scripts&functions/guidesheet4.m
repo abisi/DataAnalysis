@@ -1,9 +1,11 @@
 %% Guidesheet 4: Principle Component Analysis
 clear all;
+close all;
 load('../data/trainSet.mat');
 load('../data/trainLabels.mat');
 
 % Principal Component Analysis
+%score = zscore(trainData); 
 [coeff,score,variance]=pca(trainData);
 
 priorCov=cov(trainData);
@@ -17,6 +19,7 @@ title('Covariance matrix of the train data');
 
 figure;
 imagesc(postCov, [0, 3e-18]);
+colorbar;
 title('Covariance matrix of the transformed data');
 
 %We can observe the 16 EEG channels (clearly separated on the cov matrix).
@@ -45,7 +48,7 @@ maxPostCov=max(max(postOffDiag));
 %the projected data is higher (i.e. lower entropy).
 
 %Diagonal spread along eigenvectors is expressed by the covariance. The
-%covariance is minimized in the transformed features. The correlation is
+%covariance is minimized (?) in the transformed features. The correlation is
 %thus minimised as well, meaning that the features are not correlated and
 %carry maximum information. Each PC represent a decrease in the system's
 %entropy.
@@ -62,7 +65,11 @@ title('Total information carried by Principal Components');
 idx90=find(cumVar>0.9);
 pc90=numPC(idx90(1));
 threshold90=line([pc90 pc90], [0 1]);
-set(threshold90,'LineWidth',1,'color','blue');
+set(threshold90,'LineWidth',2,'color','blue');
+
+figure
+bar(variance);
+
 
 %Let's find minimum distance 
 %Point of 'diminishing returns': where little variance is gained
@@ -71,15 +78,16 @@ set(threshold90,'LineWidth',1,'color','blue');
 
 %% PCA and cross-validation
 clear all;
+close all;
 load('../data/trainSet.mat');
 load('../data/trainLabels.mat');
 
 %Simple cross-validation loop with fix classifier for now! (diaglin)
 Priors.ClassNames=[0 1];
 Priors.ClassProbs=[0.7 0.3];
-k=5;
+k=10;
 nObservations=length(trainLabels);
-Nmax=250; % max number of PCs 
+Nmax=500; % max number of PCs 
 
 trainErrorStorage=zeros(Nmax,k);
 testErrorStorage=zeros(Nmax,k);
@@ -106,13 +114,12 @@ optimalHyperParamStorage=0; %number of Principal components to obtain 90% total 
         testLabels=trainLabels(testMarker,:);
         
         for N=1:Nmax                        
-            selectedComponents=score(:, 1:N); %Components are classified by importance order.
-                       
-            classifier = fitcdiscr(trainSet(:, 1:N), trainingLabels, 'DiscrimType', 'diaglinear', 'Prior', Priors); 
+            selectedComponents=trainSet(:, 1:N); %Components are classified by importance order.
+            classifier = fitcdiscr(selectedComponents, trainingLabels, 'DiscrimType', 'diaglinear'); 
             
             trainPrediction=predict(classifier, trainSet(:, 1:N));
             testPrediction=predict(classifier, testSet(:, 1:N));
-                   
+            
             trainError=computeClassError(trainPrediction, trainingLabels);
             testError=computeClassError(testPrediction, testLabels);
             
@@ -126,27 +133,12 @@ meanTrainError=(mean(trainErrorStorage'))';
 meanTestError=(mean(testErrorStorage'))';
 
 figure;
-plot(1:Nmax, meanTrainError, 'g', 1:Nmax, meanTestError, 'r');
-xlabel('N'); %number of principal components
+plot(1:Nmax, meanTrainError, 'g', 1:Nmax, meanTestError, 'r', 'Linewidth', 1);
+xlabel('PC'); %number of principal components
 ylabel('Error');
 legend('Train error', 'Test error');
 
 
-%% PCA model - all the data
-%Let's say
-N = 108
-%Missing data
-augmentedData = vertcat(trainData, trainData, trainData, trainData);
-%PCA
-[coeff, score, variance]=pca(augmentedData); %As we're working with transformed features, we have to do it before
-for i=1:length(coeff)
-    if i > N 
-        coeff(i) = 0;
-    end
-end
-
-dataInPCASpace = coeff*augmentedData;
-classifier = fitcdiscr(dataInPCASpace, labels, 'DiscrimType','diaglin');
 
 %% Forward Feature Selection
 clear all;
@@ -159,11 +151,11 @@ Priors.ClassProbs=[0.7 0.3];
 classifiertype='diaglinear';
 k=4;
 
-selectionCriteria = @(xT,yT,xt,yt) length(yt)*(computeClassError(yt,predict(fitcdiscr(xT,yT,'discrimtype', classifiertype, 'Prior', Priors), xt)));
+selectionCriteria = @(xT,yT,xt,yt) length(yt)*(computeClassError(yt,predict(fitcdiscr(xT,yT,'discrimtype', classifiertype), xt)));
 opt = statset('Display','iter','MaxIter',100);
 
-trainLabels=trainLabels(1:20:end,:);
-trainData=trainData(1:20:end,:);
+trainLabels=trainLabels(1:10:end,:);
+trainData=trainData(1:10:end,:);
 
 cp=cvpartition(trainLabels,'kfold',k);
 
