@@ -17,13 +17,13 @@ validationErrorStorage=zeros(Nmax,kin);
 
 kout=4;
 
-%Erreur finale calculée pour évaluer la PERF du modèle (!!!)
+%Erreur finale calculée pour évaluer la PERF du modèle
 testErrorStorage=zeros(1,kout);
 
 %Nombre de components N optimal
 optimalComponentsNumber=zeros(1, kout);
 
-%Erreur de training + validation minimale > forcément il y en a une pas outer fold
+%Erreur de training + validation minimale
 minMeanTrainError=zeros(1, kout);
 minMeanValidationError=zeros(1, kout);
 
@@ -39,12 +39,12 @@ for i=1:kout
     outerTrainLabels=trainLabels(outerTrainIds, :);
     
     %Outer test (1/3)
-    outerTestSet=trainData(outerTestIds, :); %lui on le garde pour la fin %trainData
+    outerTestSet=trainData(outerTestIds, :); 
     outerTestLabels=trainLabels(outerTestIds, :);
     
     %To partition the inner set we need to get the size of all the inner fold
     sizeOuterTrain=size(outerTrainSet,1);
-    partitionIn = cvpartition(sizeOuterTrain, 'kfold', kin); %les data transformés ont toujours 597 observations
+    partitionIn = cvpartition(sizeOuterTrain, 'kfold', kin); %597 observations
 
     for t=1:kin        
         innerTrainIds=partitionIn.training(t);
@@ -67,9 +67,7 @@ for i=1:kout
         
         N_transformedFeatures=size(score, 2);
         
-        for N=1:N_transformedFeatures                        
-            %selectedComponents=score(:, 1:N); %Components are classified by importance order.
-            
+        for N=1:N_transformedFeatures                                 
             %diaglinear model
             classifier = fitcdiscr(score(:, 1:N), innerTrainLabels, 'DiscrimType', 'diaglinear', 'Prior', Priors); 
             
@@ -82,7 +80,7 @@ for i=1:kout
             
             %Compute errors associated to the inner loop ('simple cross-validation')
             trainError=computeClassError(innerTrainPrediction, innerTrainLabels);
-            validationError=computeClassError(innerValidationPrediction, innerValidationLabels); %testError or validationError
+            validationError=computeClassError(innerValidationPrediction, innerValidationLabels);
             
             trainErrorStorage(N,t)=trainError;
             validationErrorStorage(N,t)=validationError;
@@ -99,19 +97,18 @@ for i=1:kout
     [minValidationError, minValidationErrorIdx]=min(meanValidationError);
     
     %minimum mean TRAINING error
-    minMeanTrainError(1,i)=min(meanTrainError); %pas sur    
+    minMeanTrainError(1,i)=min(meanTrainError);    
     
     %minimum mean VALIDATION error > on la stocke quand même
     minMeanValidationError(1,i)=minValidationError;
        
     %Find the optimal NUMBER OF COMPONENTS N with the index of the min error
-    optimalComponentsNumber(1,i)=minValidationErrorIdx; %index matters here
+    optimalComponentsNumber(1,i)=minValidationErrorIdx;
     
     
     %EVALUATION OF OPTIMAL MODEL
     %as for PCA components are already in order of importance
-    %selectedComponents=score(1:minValidationErrorIdx); %pas utile
-    
+        
     %Optimal model
     optimalModel=fitcdiscr(outerTrainSet(:, 1:minValidationErrorIdx), outerTrainLabels, 'DiscrimType', 'diaglinear','Prior',Priors);
     optimalModelPrediction=predict(optimalModel, outerTestSet(:, 1:minValidationErrorIdx));

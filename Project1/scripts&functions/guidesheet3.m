@@ -137,8 +137,6 @@ end
 
 %Fin de NCV.
 
-%% CV
-
 
 %% Subsequent questions
 % How does hyperparameter differ across folds?
