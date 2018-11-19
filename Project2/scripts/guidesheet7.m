@@ -1,4 +1,4 @@
-%% Guidesheet 7 : PCA and Regression
+%% Guidesheet 7 : PCA and Regression -> we will have to com
 
 clear all;
 close all;
@@ -8,18 +8,21 @@ load('../data/Data.mat');
 
 %Partition
 proportion = 0.7;     
-rows = size(Data,1);    
-train = Data(1:round(rows*proportion),:);
-test = Data(rows-round(rows*(1-proportion)):end,:); %here we keep order because we wanna predict future values based on past values
+rows = size(Data,1);
+sep_idx = round(rows*proportion);
+train = Data(1:sep_idx,:);
+test = Data(sep_idx:end,:); %here we keep order because we wanna predict future values based on past values
+
+
 
 [std_train, mu, sigma] = zscore(train);
-std_test = (test - mu ) ./ sigma; 
+std_test = (test - mu ) ./ sigma; %using same coefficients
 
 %PCA
 
 [coeff, score, latent] = pca(std_train);
 pca_train = std_train * coeff;
-pca_test = std_test * coeff;
+pca_test = std_test * coeff; %using same coefficients
 
 %Choose PCs (+ graphs)
 cumVar=cumsum(latent)/sum(latent);
@@ -39,28 +42,196 @@ figure
 bar(latent);
 
 %% Regression - linear
-chosen_PCs = 741; %TO FILL IN
-target_posx = PosX(1:round(rows*proportion)); %y
-target_posy = PosY(1:round(rows*proportion));
+chosen_PCs = 741;  %for 90% total variance
+%Train
+target_posx = PosX(1:sep_idx);
+target_posy = PosY(1:sep_idx);
+FM_train = pca_train(:,1:chosen_PCs);
+I_train = ones(size(target_posx,1),1);
+X_train = [I_train FM_train];
 
-FM = pca_train(:,1:chosen_PCs); 
-I = ones(size(target_posx,1),1);
-X = [I FM];
+%Regression and mse
+bx = regress(target_posx, X_train(:,1:chosen_PCs)); % coefficients b
+by = regress(target_posy, X_train(:,1:chosen_PCs));
+x_hat = X_train(:,1:chosen_PCs) * bx; %regression vectors
+y_hat = X_train(:,1:chosen_PCs) * by;
+mse_posx = immse(target_posx, x_hat); %mse
+mse_posy = immse(target_posy, y_hat);
 
-%Regression
-bx = regress(target_posx,X(1:round(rows*proportion),1:chosen_PCs)); %b: coefficient
-by = regress(target_posy,X(1:round(rows*proportion),1:chosen_PCs));
+%Test
+target_posx_test = PosX(sep_idx:end); 
+target_posy_test = PosY(sep_idx:end);
+FM_test = pca_test(:,1:chosen_PCs);
+I_test = ones(size(target_posx_test,1),1);
+X_test = [I_test FM_test];
 
-%Mean-square error calculation
-mse_posx = immse(target_posx, X(:,1:chosen_PCs) * bx);
-mse_posy = immse(target_posy, X(:,1:chosen_PCs) * by);
+x_hat_te = X_test(:,1:chosen_PCs) * bx; %using SAME coefficients
+y_hat_te = X_test(:,1:chosen_PCs) * by;
+mse_posx_test = immse(target_posx_test, x_hat_te);
+mse_posy_test = immse(target_posy_test, y_hat_te);
 
-%% Plot
+%Higher error on test set (expected)
+
+%% Plot real and regressed vectors
+%Motion X
+regressed_x = [x_hat; x_hat_te];
 figure
-plot(1:rows, PosX); hold on
-plot(1:rows, PosY);
+plot(regressed_x); hold on
+plot(PosX); hold off
+xlabel('Time (ms)')
+ylabel('')
+title('Predicted cartesian coordinate X of monkey''s wrist')
+
+%Motion Y
+regressed_y = [y_hat; y_hat_te];
+figure
+plot(regressed_y); hold on
+plot(PosY); hold off
+xlabel('Time (ms)')
+ylabel('')
+title('Predicted cartesian coordinate Y of monkey''s wrist')
+
+%Rather good fits ! 
 
 %% Regression - 2nd order polynomial regressor
-X_posx_order2 = [Ix feature_matrix feature_matrix.^2];
-X_posy_order2 = [Iy feature_matrix feature_matrix.^2];
+%Second order polynomial data sets
+X_train_2 = [I_train FM_train FM_train.^2];
+X_test_2 = [I_test FM_test FM_test.^2];
+
+%Train: regress, predict, mse
+bx_2 = regress(target_posx, X_train_2); 
+by_2 = regress(target_posy, X_train_2);
+x_hat_2 = X_train_2 * bx_2; 
+y_hat_2 = X_train_2 * by_2;
+mse_posx_2 = immse(target_posx, x_hat_2); 
+mse_posy_2 = immse(target_posy, y_hat_2);
+
+%Test: regress, predict, mse
+x_hat_te_2 = X_test_2 * bx_2; %using same coefficients
+y_hat_te_2 = X_test_2 * by_2;
+mse_posx_test_2 = immse(target_posx_test, x_hat_te_2);
+mse_posy_test_2 = immse(target_posy_test, y_hat_te_2);
+
+%Training errors: they decrease a bit
+%Testing errors: they increase a bit
+
+%% Plot real and regressed vectors - 2nd order polynomial regressor
+%Motion X
+regressed_x_2 = [x_hat_2; x_hat_te_2];
+figure
+plot(regressed_x_2); hold on
+plot(PosX); hold off
+xlabel('Time (ms)')
+ylabel('')
+title('Predicted cartesian coordinate X of monkey''s wrist')
+
+%Motion Y
+regressed_y_2 = [y_hat_2; y_hat_te_2];
+figure
+plot(regressed_y_2); hold on
+plot(PosY); hold off
+xlabel('Time (ms)')
+ylabel('')
+title('Predicted cartesian coordinate Y of monkey''s wrist')
+
+%Also seems like a good fit with 2nd order. 
+%However, there might an order M at which he will overfit the data !
+
+
+%% Gradually include features
+
+n_PCs = size(pca_train,2);
+
+FM_train = pca_train;
+I_train = ones(size(target_posx,1),1);
+X_train = [I_train FM_train];
+
+FM_test = pca_test;
+I_test = ones(size(target_posx_test,1),1);
+X_test = [I_test FM_test];
+
+%Init. error vetors
+%Train
+error_x = zeros(n_PCs,1);
+error_y = zeros(n_PCs,1);
+error_x_2 = zeros(n_PCs,1);
+error_y_2 = zeros(n_PCs,1);
+%Test
+error_x_te = zeros(n_PCs,1);
+error_y_te = zeros(n_PCs,1);
+error_x_2_te = zeros(n_PCs,1);
+error_y_2_te = zeros(n_PCs,1);
+
+
+for PC_idx=1:25:n_PCs
+    disp(PC_idx)
+    %First order coeff
+    bx = regress(target_posx,X_train(:,1:PC_idx)); 
+    by = regress(target_posy,X_train(:,1:PC_idx));
+    %Second order coeff
+    bx_2 = regress(target_posx,X_train_2(:,1:PC_idx)); 
+    by_2 = regress(target_posy,X_train_2(:,1:PC_idx)); 
+    
+    %Predict
+    x_hat = X_train(:,1:PC_idx) * bx; 
+    y_hat = X_train(:,1:PC_idx) * by;
+    x_hat_2 = X_train_2(:,1:PC_idx) * bx_2; 
+    y_hat_2 = X_train_2(:,1:PC_idx) * by_2;
+    
+    x_hat_te = X_test(:,1:PC_idx) * bx; 
+    y_hat_te = X_test(:,1:PC_idx) * by;
+    x_hat_2_te = X_test_2(:,1:PC_idx) * bx_2; 
+    y_hat_2_te = X_test_2(:,1:PC_idx) * by_2;
+    
+    %Errors
+    error_x(PC_idx) = immse(target_posx, x_hat);
+    error_y(PC_idx) = immse(target_posy, y_hat);
+    error_x_2(PC_idx) = immse(target_posx, x_hat_2);
+    error_y_2(PC_idx) = immse(target_posy, y_hat_2);
+
+    error_x_te(PC_idx) = immse(target_posx_test, x_hat_te);
+    error_y_te(PC_idx) = immse(target_posy_test, y_hat_te);
+    error_x_2_te(PC_idx) = immse(target_posx_test, x_hat_2_te);
+    error_y_2_te(PC_idx) = immse(target_posy_test, y_hat_2_te);
+end
+
+
+
+%% Let's plot the errors with increaseing number of PCs
+x = [1:25:n_PCs];
+
+figure;
+subplot(2,2,1) 
+plot(x, error_x(x), 'LineWidth', 1); hold on
+plot(x, error_x_te(x), 'LineWidth', 1); 
+xlabel('Time (ms)');
+ylabel('Error');
+title('Linearly regressed PosX ');
+legend('Train error','Test error');
+
+subplot(2,2,2)
+plot(x, error_y(x), 'LineWidth', 1); hold on
+plot(x, error_y_te(x), 'LineWidth', 1);  
+xlabel('Time (ms)');
+ylabel('Error');
+title('Linearly regressed PosY ');
+legend('Train error','Test error');
+
+
+subplot(2,2,3)
+plot(x, error_x_2(x), 'LineWidth', 1); hold on
+plot(x, error_x_2_te(x), 'LineWidth', 1);  
+xlabel('Time (ms)');
+ylabel('Error');
+title('Polynomial regression of PosX ');
+legend('Train error','Test error');
+
+
+subplot(2,2,4)
+plot(x, error_y_2(x), 'LineWidth', 1); hold on
+plot(x, error_y_2_te(x), 'LineWidth', 1);
+xlabel('Time (ms)');
+ylabel('Error');
+title('Polynomial regression of PosY ');
+legend('Train error','Test error');
 
