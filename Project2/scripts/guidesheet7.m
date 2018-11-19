@@ -18,33 +18,44 @@ test = data(~idx_vector,:);
 
 %PCA
 
-[std_train, mu, sigma] = zscore(train);
-std_test = (test - mu ) ./ sigma; 
+%[std_train, mu, sigma] = zscore(train); NO because time-correlated
+%std_test = (test - mu ) ./ sigma; 
 
-[coeff, score, latent] = pca(std_train);
-pca_data = std_train * coeff;
-
-pca_test = std_test * coeff;
+[coeff, score, latent] = pca(train);
+pca_train = train * coeff';
+pca_test = test * coeff';
 
 %Choose PCs (+ graph)
+cumVar=cumsum(latent)/sum(latent);
+numPC=1:length(variance);
+figure;
+plot(numPC, cumVar, 'r'); hold on;
+xlabel('Number of PCs');
+ylabel('Percentage of the total variance');
+title('Total information carried by Principal Components');
 
+idx90=find(cumVar>0.9);
+pc90=numPC(idx90(1));
+threshold90=line([pc90 pc90], [0 1]);
+set(threshold90,'LineWidth',2,'color','blue');
 
-%Regression - linear
+figure
+bar(latent);
+
+%% Regression - linear
 %chosen_PCs = ...; %TO FILL IN
 target_posx = PosX(train); %y
 target_posy = PosY(train);
 
-%feature_matrix = ...; %TO FILL IN
-I = ones(size(target_posx(train),1),1);
-%For the x-data vector
-X_posx = [I feature_matrix];
+FM = pca_train(:,chosen_PCs); 
 
-bx = regress(target_posx(train),X_posx(train,chosen_PCs)); %b: coefficient
+Ix = ones(size(target_posx,1),1);
+Iy = ones(size(target_posy,1),1);
+X_posx = [Ix FM];
+X_posy = [Iy FM];
 
-%For the y-data vector
-X_posy = [I feature_matrix];
-
-by = regress(target_posy(train),X_posy(train,chosen_PCs));
+bx = regress(target_posx,X_posx(train,chosen_PCs)); %b: coefficient
+by = regress(target_posy,X_posy(train,chosen_PCs));
 
 %Mean-square error calculation
 mse_posx = immse(target_posx, X_posx * bx);
@@ -54,7 +65,7 @@ mse_posy = immse(target_posy, X_posy * by);
 %Plot real vectors and regressed ones
 
 
-%Regression - 2nd order polynomial regressor
+%% Regression - 2nd order polynomial regressor
 X_posx_order2 = [Ix feature_matrix feature_matrix.^2];
 X_posy_order2 = [Iy feature_matrix feature_matrix.^2];
 
