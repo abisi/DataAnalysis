@@ -7,14 +7,13 @@ load('../data/data.mat');
 %% Data set partitioning and PCA 
 
 %Partition
-data = cumsum(ones(size(Data)));  % some test data
 proportion = 0.7;     
-rows = size(data,1);  
+rows = size(Data,1);  
 idx_vector = false(rows,1);    
 idx_vector(1:round(proportion*rows)) = true;   
 idx_vector = idx_vector(randperm(rows));   % randomise order
-train = data(idx_vector,:);
-test = data(~idx_vector,:);
+train = Data(idx_vector,:);
+test = Data(~idx_vector,:);
 
 %PCA
 
@@ -22,12 +21,12 @@ test = data(~idx_vector,:);
 %std_test = (test - mu ) ./ sigma; 
 
 [coeff, score, latent] = pca(train);
-pca_train = train * coeff';
-pca_test = test * coeff';
+pca_train = train * coeff;
+pca_test = test * coeff;
 
-%Choose PCs (+ graph)
+%Choose PCs (+ graphs)
 cumVar=cumsum(latent)/sum(latent);
-numPC=1:length(variance);
+numPC=1:length(latent);
 figure;
 plot(numPC, cumVar, 'r'); hold on;
 xlabel('Number of PCs');
@@ -43,24 +42,23 @@ figure
 bar(latent);
 
 %% Regression - linear
-%chosen_PCs = ...; %TO FILL IN
+chosen_PCs = 578; %TO FILL IN
 target_posx = PosX(train); %y
 target_posy = PosY(train);
 
-FM = pca_train(:,chosen_PCs); 
+FM = pca_train(:,1:chosen_PCs); 
 
 Ix = ones(size(target_posx,1),1);
 Iy = ones(size(target_posy,1),1);
 X_posx = [Ix FM];
 X_posy = [Iy FM];
 
-bx = regress(target_posx,X_posx(train,chosen_PCs)); %b: coefficient
-by = regress(target_posy,X_posy(train,chosen_PCs));
+bx = regress(target_posx,X_posx(train,1:chosen_PCs)); %b: coefficient
+by = regress(target_posy,X_posy(train,1:chosen_PCs));
 
 %Mean-square error calculation
 mse_posx = immse(target_posx, X_posx * bx);
 mse_posy = immse(target_posy, X_posy * by);
-
 
 %Plot real vectors and regressed ones
 
