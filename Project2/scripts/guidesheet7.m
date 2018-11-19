@@ -10,13 +10,16 @@ load('../data/Data.mat');
 proportion = 0.7;     
 rows = size(Data,1);    
 train = Data(1:round(rows*proportion),:);
-test = Data(rows-round(rows*(1-proportion)):end,:);
+test = Data(rows-round(rows*(1-proportion)):end,:); %here we keep order because we wanna predict future values based on past values
+
+[std_train, mu, sigma] = zscore(train);
+std_test = (test - mu ) ./ sigma; 
 
 %PCA
 
-[coeff, score, latent] = pca(train);
-pca_train = train * coeff;
-pca_test = test * coeff;
+[coeff, score, latent] = pca(std_train);
+pca_train = std_train * coeff;
+pca_test = std_test * coeff;
 
 %Choose PCs (+ graphs)
 cumVar=cumsum(latent)/sum(latent);
@@ -36,27 +39,26 @@ figure
 bar(latent);
 
 %% Regression - linear
-chosen_PCs = 579; %TO FILL IN
-target_posx = PosX(train); %y
-target_posy = PosY(train);
+chosen_PCs = 741; %TO FILL IN
+target_posx = PosX(1:round(rows*proportion)); %y
+target_posy = PosY(1:round(rows*proportion));
 
-FMx = pca_train(target_posx,1:chosen_PCs); 
-FMy = pca_train(target_posy,1:chosen_PCs); 
-
+FM = pca_train(:,1:chosen_PCs); 
 I = ones(size(target_posx,1),1);
+X = [I FM];
 
-X_posx = [Ix FM];
-X_posy = [Iy FM];
-
-bx = regress(target_posx,X_posx(train,1:chosen_PCs)); %b: coefficient
-by = regress(target_posy,X_posy(train,1:chosen_PCs));
+%Regression
+bx = regress(target_posx,X(1:round(rows*proportion),1:chosen_PCs)); %b: coefficient
+by = regress(target_posy,X(1:round(rows*proportion),1:chosen_PCs));
 
 %Mean-square error calculation
-mse_posx = immse(target_posx, X_posx * bx);
-mse_posy = immse(target_posy, X_posy * by);
+mse_posx = immse(target_posx, X(:,1:chosen_PCs) * bx);
+mse_posy = immse(target_posy, X(:,1:chosen_PCs) * by);
 
-%Plot real vectors and regressed ones
-plot(ms)
+%% Plot
+figure
+plot(1:rows, PosX); hold on
+plot(1:rows, PosY);
 
 %% Regression - 2nd order polynomial regressor
 X_posx_order2 = [Ix feature_matrix feature_matrix.^2];
