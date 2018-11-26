@@ -8,19 +8,31 @@ load('../data/Data.mat');
 
 %Partition
 proportion = 0.7;     
-rows = size(Data,1);
+rows = size(Data,1); %12862
 sep_idx = round(rows*proportion);
 train = Data(1:sep_idx,:);
 test = Data(sep_idx:end,:); %here we keep order because we wanna predict future values based on past values
 
 
 
-[std_train, mu, sigma] = zscore(train);
-std_test = (test - mu ) ./ sigma; %using same coefficients
+[std_train, mu, sigma] = zscore(train); %normalize on train data
+std_test = (test - mu ) ./ sigma; %using same normalization coefficients for test data
 
 %PCA
 
 [coeff, score, latent] = pca(std_train);
+%Coeff contains PC coeffs of original data.
+%Each column of COEFF matrix contains coeffs for one PC.
+%Columns are in descending order in terms of component variance
+%pca centers data and uses singular value decomp algo by default
+
+%Score is representaition of data in PC space, we reconstruct centered data
+%using score*coeff'
+
+%Latent contains PC variances, i.e. eigenvalues of cov. matrix of original
+%data.
+
+% Presumably this projects original data into PC space -> NOTE TO SELF : ASK Q ABOUT PCA
 pca_train = std_train * coeff;
 pca_test = std_test * coeff; %using same coefficients
 
@@ -44,14 +56,14 @@ bar(latent);
 %% Regression - linear
 chosen_PCs = 741;  %for 90% total variance
 %Train
-target_posx = PosX(1:sep_idx);
-target_posy = PosY(1:sep_idx);
-FM_train = pca_train(:,1:chosen_PCs);
-I_train = ones(size(target_posx,1),1);
+target_posx = PosX(1:sep_idx); % x position reg. targets
+target_posy = PosY(1:sep_idx); % y position reg. targets
+FM_train = pca_train(:,1:chosen_PCs); % training feature matrix
+I_train = ones(size(FM_train,1),1); % X should include a column of ones so that the model contains a constant term
 X_train = [I_train FM_train];
 
 %Regression and mse
-bx = regress(target_posx, X_train(:,1:chosen_PCs)); % coefficients b
+bx = regress(target_posx, X_train(:,1:chosen_PCs)); % coefficients b %JULIAN'S QUESTION : why do we select 1:chosen_PCs Here ; x_train only has 742 columns
 by = regress(target_posy, X_train(:,1:chosen_PCs));
 x_hat = X_train(:,1:chosen_PCs) * bx; %regression vectors
 y_hat = X_train(:,1:chosen_PCs) * by;
@@ -62,7 +74,7 @@ mse_posy = immse(target_posy, y_hat);
 target_posx_test = PosX(sep_idx:end); 
 target_posy_test = PosY(sep_idx:end);
 FM_test = pca_test(:,1:chosen_PCs);
-I_test = ones(size(target_posx_test,1),1);
+I_test = ones(size(FM_test,1),1);
 X_test = [I_test FM_test];
 
 x_hat_te = X_test(:,1:chosen_PCs) * bx; %using SAME coefficients
@@ -143,11 +155,11 @@ title('Predicted cartesian coordinate Y of monkey''s wrist')
 n_PCs = size(pca_train,2);
 
 FM_train = pca_train;
-I_train = ones(size(target_posx,1),1);
+I_train = ones(size(FM_train,1),1);
 X_train = [I_train FM_train];
 
 FM_test = pca_test;
-I_test = ones(size(target_posx_test,1),1);
+I_test = ones(size(FM_test,1),1);
 X_test = [I_test FM_test];
 
 %Init. error vetors
@@ -163,7 +175,7 @@ error_x_2_te = zeros(n_PCs,1);
 error_y_2_te = zeros(n_PCs,1);
 
 
-for PC_idx=1:25:n_PCs
+for PC_idx=1:50:n_PCs
     disp(PC_idx)
     %First order coeff
     bx = regress(target_posx,X_train(:,1:PC_idx)); 
@@ -198,13 +210,13 @@ end
 
 
 %% Let's plot the errors with increaseing number of PCs
-x = [1:25:n_PCs];
+x = [1:50:n_PCs]; %number PCs
 
 figure;
 subplot(2,2,1) 
 plot(x, error_x(x), 'LineWidth', 1); hold on
 plot(x, error_x_te(x), 'LineWidth', 1); 
-xlabel('Time (ms)');
+xlabel('nb PCs');
 ylabel('Error');
 title('Linearly regressed PosX ');
 legend('Train error','Test error');
@@ -212,7 +224,7 @@ legend('Train error','Test error');
 subplot(2,2,2)
 plot(x, error_y(x), 'LineWidth', 1); hold on
 plot(x, error_y_te(x), 'LineWidth', 1);  
-xlabel('Time (ms)');
+xlabel('nb PCs');
 ylabel('Error');
 title('Linearly regressed PosY ');
 legend('Train error','Test error');
@@ -221,7 +233,7 @@ legend('Train error','Test error');
 subplot(2,2,3)
 plot(x, error_x_2(x), 'LineWidth', 1); hold on
 plot(x, error_x_2_te(x), 'LineWidth', 1);  
-xlabel('Time (ms)');
+xlabel('nb PCs');
 ylabel('Error');
 title('Polynomial regression of PosX ');
 legend('Train error','Test error');
@@ -230,7 +242,7 @@ legend('Train error','Test error');
 subplot(2,2,4)
 plot(x, error_y_2(x), 'LineWidth', 1); hold on
 plot(x, error_y_2_te(x), 'LineWidth', 1);
-xlabel('Time (ms)');
+xlabel('nb PCs');
 ylabel('Error');
 title('Polynomial regression of PosY ');
 legend('Train error','Test error');
