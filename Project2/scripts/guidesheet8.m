@@ -54,11 +54,20 @@ mse_posy_test = immse(pos_y_test, y_hat_test);
 %% LASSO
 lambda = logspace(-10, 0, 15);
 k = 10;
-[Bx, FitInfo_x, 'Lambda', lambda, 'CV', k] = lasso(train, pos_x);
-[By, FitInfo_y, 'Lambda', lambda, 'CV', k] = lasso(train, pos_y);
+[Bx, FitInfo_x] = lasso(train, pos_x, 'Lambda', lambda, 'CV', k);
+[By, FitInfo_y] = lasso(train, pos_y, 'Lambda', lambda, 'CV', k);
+
+plot(FitInfo_x.Lambda, FitInfo_x.MSE);
+semilogx(lambda, FitInfo_x.MSE);
+xlabel('\lambda');
+ylabel('MSE');
+
+%Selecting lambda corresponding to the best MSE
+[min_mse, min_mse_idx] = min(FitInfo_x.MSE);
+min_lambda = lambda(min_mse_idx);
 
 %% Elastic nets
 
-[Bx, FitInfo_x, 'Lambda', lambda, 'CV', k, 'Alpha', 0.5] = lasso(train, pos_x);
-[By, FitInfo_y, 'Lambda', lambda, 'CV', k, 'Alpha', 0.5] = lasso(train, pos_y);
+[Bx, FitInfo_x] = lasso(train, pos_x, 'Lambda', lambda, 'CV', k, 'Alpha', 0.5);
+[By, FitInfo_y] = lasso(train, pos_y, 'Lambda', lambda, 'CV', k, 'Alpha', 0.5);
 
