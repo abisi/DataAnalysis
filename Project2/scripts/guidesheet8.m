@@ -57,6 +57,16 @@ k = 10;
 [Bx, FitInfo_x] = lasso(train, pos_x, 'Lambda', lambda, 'CV', k);
 [By, FitInfo_y] = lasso(train, pos_y, 'Lambda', lambda, 'CV', k);
 
+%Number of non-zero beta weight
+nz_weight=[]; %contain non-zero element for each lambda
+for i = 1:length(lambda)
+   nnz_el = nnz(Bx(:, i));
+   nz_weight = [nz_weight nnz_el];
+end
+
+%as lambda increase, the number of 0 increases as well (i.e. the number of
+%non-zero elements decreases)
+
 plot(FitInfo_x.Lambda, FitInfo_x.MSE);
 semilogx(lambda, FitInfo_x.MSE);
 xlabel('\lambda');
@@ -64,7 +74,13 @@ ylabel('MSE');
 
 %Selecting lambda corresponding to the best MSE
 [min_mse, min_mse_idx] = min(FitInfo_x.MSE);
-min_lambda = lambda(min_mse_idx);
+min_lambda = lambda(min_mse_idx)
+
+intercept_x = FitInfo_x.Intercept(min_mse_idx)
+beta_x = Bx(:, min_mse_idx);
+
+%Regress test data
+
 
 %% Elastic nets
 
