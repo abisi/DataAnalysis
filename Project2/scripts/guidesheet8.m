@@ -10,7 +10,7 @@ load('../data/Data.mat');
 proportion = 0.05; %use 5% of the dataset for training     
 rows = size(Data,1);
 sep_idx = round(rows*proportion);
-train = Data(1:sep_idx,:);
+train = Data(1:sep_idx,:); % We only use 5% of Data for training!!
 test = Data(sep_idx:end,:);
 
 %Train outputs
@@ -22,28 +22,28 @@ pos_x_test = PosX(sep_idx:end);
 pos_y_test = PosY(sep_idx:end);
 
 %Regression
-nFeatures = 100; %TODO: define appropriate value
+nFeatures = 100; %TODO: define appropriate value -> NCV?
 %Train: for PosX and PosY
 FM_train = train(:, 1:nFeatures);
-I_train = ones(size(pos_x, 1), 1);
+I_train = ones(size(FM_train, 1), 1);
 X_train = [I_train FM_train];
 
-bx = regress(pos_x, X_train(:,1:nFeatures));
-by = regress(pos_y, X_train(:,1:nFeatures));
+bx = regress(pos_x, X_train);
+by = regress(pos_y, X_train);
 
-x_hat = X_train(:,1:nFeatures) * bx; %regression vectors
-y_hat = X_train(:,1:nFeatures) * by;
+x_hat = X_train * bx; %regression vectors
+y_hat = X_train * by;
 
 mse_posx = immse(pos_x, x_hat); 
 mse_posy = immse(pos_y, y_hat); 
 
 %Test:for PosX and PosY
 FM_test = test(:, 1:nFeatures);
-I_test = ones(size(pos_x_test, 1), 1);
+I_test = ones(size(FM_test, 1), 1);
 X_test = [I_test FM_test];
 
-x_hat_test = X_test(:, 1:nFeatures) * bx;
-y_hat_test = X_test(:, 1:nFeatures) * by;
+x_hat_test = X_test * bx;
+y_hat_test = X_test * by;
 
 mse_posx_test = immse(pos_x_test, x_hat_test); 
 mse_posy_test = immse(pos_y_test, y_hat_test); 
