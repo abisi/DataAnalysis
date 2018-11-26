@@ -63,10 +63,10 @@ I_train = ones(size(FM_train,1),1); % X should include a column of ones so that 
 X_train = [I_train FM_train];
 
 %Regression and mse
-bx = regress(target_posx, X_train(:,1:chosen_PCs)); % coefficients b %JULIAN'S QUESTION : why do we select 1:chosen_PCs Here ; x_train only has 742 columns
-by = regress(target_posy, X_train(:,1:chosen_PCs));
-x_hat = X_train(:,1:chosen_PCs) * bx; %regression vectors
-y_hat = X_train(:,1:chosen_PCs) * by;
+bx = regress(target_posx, X_train); % coefficients b %JULIAN'S
+by = regress(target_posy, X_train);
+x_hat = X_train * bx; %regression vectors
+y_hat = X_train * by;
 mse_posx = immse(target_posx, x_hat); %mse
 mse_posy = immse(target_posy, y_hat);
 
@@ -77,8 +77,8 @@ FM_test = pca_test(:,1:chosen_PCs);
 I_test = ones(size(FM_test,1),1);
 X_test = [I_test FM_test];
 
-x_hat_te = X_test(:,1:chosen_PCs) * bx; %using SAME coefficients
-y_hat_te = X_test(:,1:chosen_PCs) * by;
+x_hat_te = X_test * bx; %using SAME coefficients
+y_hat_te = X_test * by;
 mse_posx_test = immse(target_posx_test, x_hat_te);
 mse_posy_test = immse(target_posy_test, y_hat_te);
 
@@ -177,23 +177,24 @@ error_y_2_te = zeros(n_PCs,1);
 
 for PC_idx=1:50:n_PCs
     disp(PC_idx)
+    counter=PC_idx+1;
     %First order coeff
-    bx = regress(target_posx,X_train(:,1:PC_idx)); 
-    by = regress(target_posy,X_train(:,1:PC_idx));
+    bx = regress(target_posx,X_train(:,1:counter));
+    by = regress(target_posy,X_train(:,1:counter));
     %Second order coeff
-    bx_2 = regress(target_posx,X_train_2(:,1:PC_idx)); 
-    by_2 = regress(target_posy,X_train_2(:,1:PC_idx)); 
+    bx_2 = regress(target_posx,X_train_2(:,1:counter)); 
+    by_2 = regress(target_posy,X_train_2(:,1:counter)); 
     
     %Predict
-    x_hat = X_train(:,1:PC_idx) * bx; 
-    y_hat = X_train(:,1:PC_idx) * by;
-    x_hat_2 = X_train_2(:,1:PC_idx) * bx_2; 
-    y_hat_2 = X_train_2(:,1:PC_idx) * by_2;
+    x_hat = X_train(:,1:counter) * bx; 
+    y_hat = X_train(:,1:counter) * by;
+    x_hat_2 = X_train_2(:,1:counter) * bx_2; 
+    y_hat_2 = X_train_2(:,1:counter) * by_2;
     
-    x_hat_te = X_test(:,1:PC_idx) * bx; 
-    y_hat_te = X_test(:,1:PC_idx) * by;
-    x_hat_2_te = X_test_2(:,1:PC_idx) * bx_2; 
-    y_hat_2_te = X_test_2(:,1:PC_idx) * by_2;
+    x_hat_te = X_test(:,1:counter) * bx; 
+    y_hat_te = X_test(:,1:counter) * by;
+    x_hat_2_te = X_test_2(:,1: counter) * bx_2; 
+    y_hat_2_te = X_test_2(:,1:counter) * by_2;
     
     %Errors
     error_x(PC_idx) = immse(target_posx, x_hat);
