@@ -63,7 +63,7 @@ I_train = ones(size(FM_train,1),1); % X should include a column of ones so that 
 X_train = [I_train FM_train];
 
 %Regression and mse
-bx = regress(target_posx, X_train); % coefficients b %JULIAN'S
+bx = regress(target_posx, X_train); % coefficients b 
 by = regress(target_posy, X_train);
 x_hat = X_train * bx; %regression vectors
 y_hat = X_train * by;
@@ -85,25 +85,25 @@ mse_posy_test = immse(target_posy_test, y_hat_te);
 %Higher error on test set (expected)
 
 %% Plot real and regressed vectors
-%Motion X
+
 regressed_x = [x_hat; x_hat_te];
-figure
-plot(regressed_x); hold on
-plot(PosX); hold off
-xlabel('Time (ms)')
-ylabel('')
-title('Predicted cartesian coordinate X of monkey''s wrist')
-
-%Motion Y
 regressed_y = [y_hat; y_hat_te];
+%Train X and Y
 figure
-plot(regressed_y); hold on
-plot(PosY); hold off
-xlabel('Time (ms)')
-ylabel('')
-title('Predicted cartesian coordinate Y of monkey''s wrist')
+plot(x_hat(1:3:end), y_hat(1:3:end), '.'); hold on %regressed
+plot(target_posx(1:3:end), target_posy(1:3:end), '.'); hold off %real
+xlabel('Position X')
+ylabel('Position Y')
+title('Predicted and real movements of monkey''s wrist - training test')
 
-%Rather good fits ! 
+%Test X and Y
+figure
+plot(x_hat_te(1:3:end), y_hat_te(1:3:end), '.'); hold on
+plot(target_posx_test(1:3:end), target_posy_test(1:3:end), '.'); hold off
+xlabel('Position X')
+ylabel('Position Y')
+title('Predicted and real movements of monkey''s wrist - test test')
+% Some overfit ! 
 
 %% Regression - 2nd order polynomial regressor
 %Second order polynomial data sets
@@ -128,27 +128,27 @@ mse_posy_test_2 = immse(target_posy_test, y_hat_te_2);
 %Testing errors: they increase a bit
 
 %% Plot real and regressed vectors - 2nd order polynomial regressor
-%Motion X
+
 regressed_x_2 = [x_hat_2; x_hat_te_2];
-figure
-plot(regressed_x_2); hold on
-plot(PosX); hold off
-xlabel('Time (ms)')
-ylabel('')
-title('Predicted cartesian coordinate X of monkey''s wrist')
-
-%Motion Y
 regressed_y_2 = [y_hat_2; y_hat_te_2];
+
+%Train X and Y
 figure
-plot(regressed_y_2); hold on
-plot(PosY); hold off
-xlabel('Time (ms)')
-ylabel('')
-title('Predicted cartesian coordinate Y of monkey''s wrist')
+plot(x_hat_2, y_hat_2); hold on
+plot(target_posx, target_posy); hold off
+xlabel('Position X')
+ylabel('Postion Y')
+title('Predicted and real movements of monkey''s wrist - train test')
 
-%Also seems like a good fit with 2nd order. 
-%However, there might an order M at which he will overfit the data !
+%Test X and Y
+figure
+plot(x_hat_2_te, y_hat_2_te); hold on
+plot(target_posx_test, target_posy_test); hold off
+xlabel('Position X')
+ylabel('Position Y')
+title('Predicted and real movements of monkey''s wrist - test test')
 
+% Overfitting !
 
 %% Gradually include features
 
@@ -157,10 +157,12 @@ n_PCs = size(pca_train,2);
 FM_train = pca_train;
 I_train = ones(size(FM_train,1),1);
 X_train = [I_train FM_train];
+X_train_2 = [I_train FM_train.^2];
 
 FM_test = pca_test;
 I_test = ones(size(FM_test,1),1);
 X_test = [I_test FM_test];
+X_test_2 = [I_test FM_test FM_test.^2];
 
 %Init. error vetors
 %Train
@@ -175,8 +177,7 @@ error_x_2_te = zeros(n_PCs,1);
 error_y_2_te = zeros(n_PCs,1);
 
 
-for PC_idx=1:50:n_PCs
-    disp(PC_idx)
+for PC_idx=1:10:n_PCs
     counter=PC_idx+1;
     %First order coeff
     bx = regress(target_posx,X_train(:,1:counter));
@@ -210,41 +211,41 @@ end
 
 
 
-%% Let's plot the errors with increaseing number of PCs
-x = [1:50:n_PCs]; %number PCs
+%% Let's plot the errors with increasing number of PCs
+x = [1:10:n_PCs]; %number PCs
 
 figure;
 subplot(2,2,1) 
-plot(x, error_x(x), 'LineWidth', 1); hold on
-plot(x, error_x_te(x), 'LineWidth', 1); 
-xlabel('nb PCs');
-ylabel('Error');
+plot(x, error_x(x), '.'); hold on
+plot(x, error_x_te(x), '.'); 
+xlabel('Number of PCs');
+ylabel('MSE');
 title('Linearly regressed PosX ');
-legend('Train error','Test error');
+legend('Training error','Testing error');
 
 subplot(2,2,2)
-plot(x, error_y(x), 'LineWidth', 1); hold on
-plot(x, error_y_te(x), 'LineWidth', 1);  
-xlabel('nb PCs');
-ylabel('Error');
-title('Linearly regressed PosY ');
-legend('Train error','Test error');
+plot(x, error_y(x), '.'); hold on
+plot(x, error_y_te(x), '.');  
+xlabel('Number of PCs');
+ylabel('MSE');
+title('Linearly regressed PosY');
+legend('Training error','Testing error');
 
 
 subplot(2,2,3)
-plot(x, error_x_2(x), 'LineWidth', 1); hold on
-plot(x, error_x_2_te(x), 'LineWidth', 1);  
-xlabel('nb PCs');
-ylabel('Error');
+plot(x, error_x_2(x), '.'); hold on
+plot(x, error_x_2_te(x), '.');  
+xlabel('Number of PCs');
+ylabel('MSE');
 title('Polynomial regression of PosX ');
-legend('Train error','Test error');
+legend('Training error','Testing error');
 
 
 subplot(2,2,4)
-plot(x, error_y_2(x), 'LineWidth', 1); hold on
-plot(x, error_y_2_te(x), 'LineWidth', 1);
-xlabel('nb PCs');
-ylabel('Error');
+plot(x, error_y_2(x), '.'); hold on
+plot(x, error_y_2_te(x), '.');
+xlabel('Number of PCs');
+ylabel('MSE');
 title('Polynomial regression of PosY ');
-legend('Train error','Test error');
+legend('Training error','Testing error');
 
