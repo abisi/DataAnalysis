@@ -201,7 +201,7 @@ beta_y = By(:, min_mse_idx_y);
 
 FM_val = Data(sep_idx_train+1:sep_idx_val,:);
 I_val = ones(size(FM_val,1),1); %not used because lasso apparently does not add one... despite what the guidesheet says?
-X_val = [FM_val];
+X_val = [I_val FM_val];
 
 x_hat_lasso = X_val * beta_x; %regression vectors: weight for each feature for lambda yielding lowest MSE
 y_hat_lasso = X_val * beta_y;
@@ -268,6 +268,78 @@ legend(h([3]),'Minimum MSE')
 [Bx_en, FitInfo_x_en] = lasso(train, pos_x, 'Lambda', lambda, 'CV', k, 'Alpha', 0.5);
 [By_en, FitInfo_y_en] = lasso(train, pos_y, 'Lambda', lambda, 'CV', k, 'Alpha', 0.5);
 
+%% Number of non-zero beta weights
+nz_weight_en=[]; %contains non-zero element for each lambda
+for i = 1:length(lambda)
+   nnz_el = nnz(Bx(:, i));
+   nz_weight_en = [nz_weight_en nnz_el];
+end
+
+figure
+plot(lambda, nz_weight_en);  
+semilogx(lambda, nz_weight_en, 'LineWidth', 1.5);
+xlabel('\lambda')
+ylabel('Number of non-zero weights')
+title('Sparsity of weights \beta')
+
+% Number of ZERO weights greatly decreases as lambda increases.
+
+%% Selecting lambda corresponding to the best MSE
+%X
+[min_mse_x_en, min_mse_idx_x_en] = min(FitInfo_x_en.MSE);
+min_lambda_x_en = lambda(min_mse_idx_x_en)
+intercept_x_en = FitInfo_x_en.Intercept(min_mse_idx_x_en)
+beta_x_en = Bx(:, min_mse_idx_x_en);
+
+%Y - OR, should we keep the same lambda min ? 
+[min_mse_y_en, min_mse_idx_y_en] = min(FitInfo_y_en.MSE);
+min_lambda_y_en = lambda(min_mse_idx_y_en)
+intercept_y_en = FitInfo_y_en.Intercept(min_mse_idx_y_en)
+beta_y_en = By(:, min_mse_idx_y_en);
+
+% Now, regress test data
+
+FM_val_en = Data(sep_idx_train+1:sep_idx_val,:);
+I_val_en = ones(size(FM_val,1),1); %not used because lasso apparently does not add one... despite what the guidesheet says?
+X_val_en = [I_val_en FM_val_en];
+
+x_hat_en = X_val_en * beta_x_en; %regression vectors: weight for each feature for lambda yielding lowest MSE
+y_hat_en = X_val_en * beta_y_en;
+
+%Compute validation errors
+mse_posx_val_en = immse(pos_x_val, x_hat_en); 
+mse_posy_val_en = immse(pos_y_val, y_hat_en); 
+
+val_errors = [mse_posx_val_en mse_posy_val_en]
+
+%% Elestic net on test set
+
+
+
+
+%% Comparisaon with Lasso
+
+
+
+%% Hyperparameters optimization
+%Test for several values of alpha
+%lambda still logspace(...)
+
+%Questions for TAs
+%Hyperparams optimisation > cross-validation or single training-test?
+%Performance estimation?
+k = 10;
+
+alpha = 0:0.1:1;
+
+optimal_lambda_x = zeros(1, length(lambda));
+optimal_lambda_y = zeros(1, length(lambda));
+
+for i = 1:length(lambda)
+   [bx, FitInfo_x] = lasso(train, pos_x, 'Lambda', lambda, 'CV', k, 'Alpha', alpha(i)); 
+   [by, FitInfo_y] = lasso(train, pos_y, 'Lambda', lambda, 'CV', k, 'Alpha', alpha(i));
+   
+end
 
 
 
