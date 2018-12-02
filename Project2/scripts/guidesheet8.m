@@ -10,6 +10,8 @@
 % -Does it really add an intercept to training data X ? Because it
 % gives back B which are a size different than X = [I FM]...
 % -Is it normal that validation and testing errors are roughly the same ?
+%Final model:
+%How should we separate our data? (as usual: 60-30-10)?
 
 clear all;
 close all;
@@ -37,8 +39,6 @@ pos_x_test = PosX(sep_idx_train+1:end);
 pos_y_test = PosY(sep_idx_train+1:end);
 
 %% Regression
-%For the purpose of the exercice we'll split thee data in 3 sets:
-%5% training, 65% validation, 30% test
 
 nFeatures = size(train,2); %TODO: define appropriate feature number ? Right now we do with everything
 
@@ -60,7 +60,7 @@ mse_errors_train = [mse_posx_train mse_posy_train];
 disp(mse_errors_train)
 
 %Test:for PosX and PosY
-%Here FM = validation + test -> 95% is test
+%Here FM = validation + test -> 95% is test!
 FM_test = Data(sep_idx_train+1:end,:);
 I_test = ones(floor((1-train_proportion) * rows), 1);
 X_test = [I_test FM_test];
@@ -103,10 +103,50 @@ legend('Predicted trajectory','Real trajectory')
 
 % Strong overfitting of the test set ! 
 
+%Plot the position as a function of time > to compare with Guidesheet7
+%i find personnally the output more clear to interpret
+%TRAIN
+figure
+subplot(2,1,1)
+plot(x_hat, 'LineWidth', 1); hold on;
+plot(pos_x, '--r', 'LineWidth', 1); hold off;
+xlabel('Time [ms]');
+ylabel('X');
+title('Arm and predicted trajectory along x');
+legend('Predicted trajectory','Real trajectory');
+
+subplot(2,1,2)
+plot(y_hat, 'LineWidth', 1); hold on;
+plot(pos_y, '--r', 'LineWidth', 1); hold off;
+xlabel('Time [ms]');
+ylabel('Y');
+title('Arm and predicted trajectory along y');
+legend('Predicted trajectory','Real trajectory');
+
+%TEST
+figure
+subplot(2,1,1)
+plot(x_hat_test, 'LineWidth', 1); hold on
+plot(pos_x_test, '--r', 'LineWidth', 1); hold off
+xlabel('Time [ms]')
+ylabel('X')
+axis([3500 4000 -0.4 0.6]);
+title('Predicted and real movements of monkey''s wrist - test test')
+legend('Predicted trajectory','Real trajectory')
+
+subplot(2,1,2)
+plot(y_hat_test, 'LineWidth', 1); hold on
+plot(pos_y_test, '--r', 'LineWidth', 1); hold off
+xlabel('Time [ms]')
+ylabel('Y')
+axis([3500 4000 -0.15 0.6]);
+title('Predicted and real movements of monkey''s wrist - test test')
+legend('Predicted trajectory','Real trajectory')
 
 %% LASSO
+%For the purpose of the exercice we'll split the data in 3 sets:
+%5% training, 65% validation, 30% test
 
-%Data partitionning -> now we divide 5%-65%-30% (train-validation-test)
 %Train targets
 pos_x_train = PosX(1:sep_idx_train);
 pos_y_train = PosY(1:sep_idx_train);
@@ -227,3 +267,7 @@ legend(h([3]),'Minimum MSE')
 
 [Bx_en, FitInfo_x_en] = lasso(train, pos_x, 'Lambda', lambda, 'CV', k, 'Alpha', 0.5);
 [By_en, FitInfo_y_en] = lasso(train, pos_y, 'Lambda', lambda, 'CV', k, 'Alpha', 0.5);
+
+
+
+

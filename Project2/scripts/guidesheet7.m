@@ -105,6 +105,26 @@ ylabel('Position Y')
 title('Predicted and real movements of monkey''s wrist - test test')
 % Some overfit ! 
 
+%Previous plots
+%X motion
+subplot(2,1,1)
+plot(regressed_x, 'LineWidth', 1); hold on;
+plot(PosX, 'Linewidth', 1); hold off;
+xlabel('Time [ms]');
+ylabel('X');
+axis([4000 5000 -0.05 0.18]); %2000-2500 vs -0.05 0.18
+legend('Regressed position', 'Arm postition');
+
+subplot(2,1,2)
+plot(regressed_y, 'LineWidth', 1); hold on;
+plot(PosY, 'LineWidth', 1); hold off;
+xlabel('Time [ms]');
+ylabel('Y');
+%title('');
+axis([4000 5000 0.1 0.33]); %2000-2500 vs -0.05 0.18
+legend('Regressed position', 'Arm postition');
+
+
 %% Regression - 2nd order polynomial regressor
 %Second order polynomial data sets
 X_train_2 = [I_train FM_train FM_train.^2];
