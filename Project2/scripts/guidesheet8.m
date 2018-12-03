@@ -91,59 +91,59 @@ subplot(1,2,1)
 plot(x_hat, y_hat, 'LineWidth', 2); hold on
 plot(pos_x, pos_y); hold off
 xlabel('Position X')
-ylabel('Postion Y')
-title('Predicted and real movements of monkey''s wrist - train test')
-legend('Predicted trajectory','Real trajectory')
+ylabel('Position Y')
+title('Predicted and real movements of monkey''s wrist - training test')
+legend('Predicted','Real')
 
 subplot(1,2,2)
 plot(x_hat_test, y_hat_test, 'LineWidth', 2); hold on
 plot(pos_x_test, pos_y_test); hold off
 xlabel('Position X')
-ylabel('Postion Y')
-title('Predicted and real movements of monkey''s wrist - test test')
-legend('Predicted trajectory','Real trajectory')
+ylabel('Position Y')
+title('Predicted and real movements of monkey''s wrist - testing test')
+legend('Predicted','Real')
 
 % Strong overfitting of the test set ! 
 
 %Plot the position as a function of time > to compare with Guidesheet7
-%i find personnally the output more clear to interpret
+%I find personnally the output more clear to interpret
+
 %TRAIN
 figure
-subplot(2,1,1)
+subplot(2,2,1)
 plot(x_hat, 'LineWidth', 1); hold on;
 plot(pos_x, '--r', 'LineWidth', 1); hold off;
 xlabel('Time [ms]');
-ylabel('X');
-title('Arm and predicted trajectory along x');
-legend('Predicted trajectory','Real trajectory');
+ylabel('PosX');
+title('Real and predicted arm movement along axis X - training set');
+legend('Predicted','Real');
 
-subplot(2,1,2)
+subplot(2,2,2)
 plot(y_hat, 'LineWidth', 1); hold on;
 plot(pos_y, '--r', 'LineWidth', 1); hold off;
 xlabel('Time [ms]');
-ylabel('Y');
-title('Arm and predicted trajectory along y');
-legend('Predicted trajectory','Real trajectory');
+ylabel('PosY');
+title('Real and predicted arm movement along axis Y - training set');
+legend('Predicted','Real');
 
 %TEST
-figure
-subplot(2,1,1)
+subplot(2,2,3)
 plot(x_hat_test, 'LineWidth', 1); hold on
 plot(pos_x_test, '--r', 'LineWidth', 1); hold off
 xlabel('Time [ms]')
-ylabel('X')
+ylabel('PosX')
 axis([3500 4000 -0.4 0.6]);
-title('Predicted and real movements of monkey''s wrist - test test')
-legend('Predicted trajectory','Real trajectory')
+title('Real and predicted arm movement along axis X - testing set')
+legend('Predicted','Real')
 
-subplot(2,1,2)
+subplot(2,2,4)
 plot(y_hat_test, 'LineWidth', 1); hold on
 plot(pos_y_test, '--r', 'LineWidth', 1); hold off
 xlabel('Time [ms]')
-ylabel('Y')
+ylabel('PosY')
 axis([3500 4000 -0.15 0.6]);
-title('Predicted and real movements of monkey''s wrist - test test')
-legend('Predicted trajectory','Real trajectory')
+title('Real and predicted arm movement along axis Y - testing test')
+legend('Predicted','Real')
 
 %% LASSO
 %For the purpose of the exercice we'll split the data in 3 sets:
@@ -162,81 +162,45 @@ pos_x_test = PosX(sep_idx_val+1:end);
 pos_y_test = PosY(sep_idx_val+1:end);
 
 %Parameters
-lambda = logspace(-10, 0, 30);
-k = 10;
+lambda_range = logspace(-10, 0, 30);
+%Since time-dependent samples, NO CV
+Bx = zeros(length(lambda_range),length(train));
+By = zeros(length(lambda_range),length(train));
+mse_x = zeros(length(lambda_range),1);
+mse_y = zeros(length(lambda_range),1);
 
-%Since lasso arleady does CV we feed it with both train and validation
-[Bx, FitInfo_x] = lasso(train, pos_x_train, 'Lambda', lambda, 'CV', k);
-[By, FitInfo_y] = lasso(train, pos_y_train, 'Lambda', lambda, 'CV', k);
+for idx_lambda=1:length(lambda_range)
+    %PosX
+    [bx, FitInfo_x] = lasso(train, pos_x_train, 'Lambda', lambda_range(idx_lambda), 'CV', 'resubstitution');
+    Bx(idx_lambda,:) = bx';
+    %idxLambda1SE_x = FitInfo_x.Index1SE;
+    %coef_x = Bx(:,idxLambda1SE_x);
+    coef0_x = FitInfo_x.Intercept;
+    yhat_x = train*bx + coef0_x;
+    mse_x(idx_lambda) = immse(yhat_x, pos_x_train);
 
+    %PosY
+    [by, FitInfo_y] = lasso(train, pos_y_train, 'Lambda', lambda_range(idx_lambda), 'CV', 'resubstitution');
+    By(idx_lambda,:) = by';
 
-%% Number of non-zero beta weights
-nz_weight=[]; %contains non-zero element for each lambda
-for i = 1:length(lambda)
-   nnz_el = nnz(Bx(:, i));
-   nz_weight = [nz_weight nnz_el];
+    %idxLambda1SE_y = FitInfo_y.Index1SE;
+    %coef_y = B_y(:,idxLambda1SE_y);
+    coef0_y = FitInfo_y.Intercept;
+    yhat_y = train*by + coef0_y;
+    mse_y(idx_lambda) = immse(yhat_y, pos_y_train);
 end
-
-figure
-plot(lambda, nz_weight);  
-semilogx(lambda, nz_weight, 'LineWidth', 1.5);
-xlabel('\lambda')
-ylabel('Number of non-zero weights')
-title('Sparsity of weights \beta')
-
-% Number of ZERO weights greatly decreases as lambda increases.
-
 %% Selecting lambda corresponding to the best MSE
 %X
-[min_mse_x, min_mse_idx_x] = min(FitInfo_x.MSE);
-min_lambda_x = lambda(min_mse_idx_x)
-intercept_x = FitInfo_x.Intercept(min_mse_idx_x)
-beta_x = Bx(:, min_mse_idx_x);
+[min_mse_x, min_mse_idx_x] = min(mse_x);
+min_lambda_x = lambda_range(min_mse_idx_x)
+%intercept_x = FitInfo_x.Intercept(min_mse_idx_x)
+beta_x = Bx(min_mse_idx_x,:);
 
 %Y - OR, should we keep the same lambda min ? 
-[min_mse_y, min_mse_idx_y] = min(FitInfo_y.MSE);
-min_lambda_y = lambda(min_mse_idx_y)
-intercept_y = FitInfo_y.Intercept(min_mse_idx_y)
-beta_y = By(:, min_mse_idx_y);
-
-% Now, regress test data
-
-FM_val = Data(sep_idx_train+1:sep_idx_val,:);
-I_val = ones(size(FM_val,1),1); %not used because lasso apparently does not add one... despite what the guidesheet says?
-X_val = [I_val FM_val];
-
-x_hat_lasso = X_val * beta_x; %regression vectors: weight for each feature for lambda yielding lowest MSE
-y_hat_lasso = X_val * beta_y;
-
-%Compute validation errors
-mse_posx_val = immse(pos_x_val, x_hat_lasso); 
-mse_posy_val = immse(pos_y_val, y_hat_lasso); 
-
-val_errors = [mse_posx_val mse_posy_val]
-
-% Validation errors
-% X: 0.0120
-% Y: 0.0248
-
-%% Now on test set - LASSO
-
-FM_test = Data(sep_idx_val+1:end,:);
-X_test = [FM_test]; %useless I know but jsut to keep same structure
-
-%Predict
-x_hat_lasso_test = X_test * beta_x; %regression vectors: weight for each feature for lambda yielding lowest MSE
-y_hat_lasso_test = X_test * beta_y;
-
-%Compute test errors
-mse_posx_test = immse(pos_x_test, x_hat_lasso_test); 
-mse_posy_test = immse(pos_y_test, y_hat_lasso_test); 
-
-test_errors = [mse_posx_test mse_posy_test]
-
-%Test errors
-% X: 0.0112
-% Y: 0.0250 
-%Validation and test errors are roughly the same... normal ? 
+[min_mse_y, min_mse_idx_y] = min(mse_y);
+min_lambda_y = lambda_range(min_mse_idx_y)
+%intercept_y = FitInfo_y.Intercept(min_mse_idx_y)
+beta_y = By(min_mse_idx_y,:);
 
 %% Plots LASSO
 
@@ -245,9 +209,9 @@ test_errors = [mse_posx_test mse_posy_test]
 
 figure
 subplot(1,2,1)
-h(1) = plot(FitInfo_x.Lambda, FitInfo_x.MSE); 
-h(2) = semilogx(lambda, FitInfo_x.MSE, 'LineWidth', 1.5); hold on
-h(3) = semilogx(lambda, FitInfo_x.MSE, '*', 'MarkerIndices', [FitInfo_x.IndexMinMSE], ...
+h(1) = plot(lambda_range, mse_x); 
+h(2) = semilogx(lambda_range, mse_x, 'LineWidth', 1.5); hold on
+h(3) = semilogx(lambda_range, mse_x, '*', 'MarkerIndices', min_mse_idx_x, ...
     'MarkerFaceColor','red', 'MarkerSize', 10);
 xlabel('\lambda')
 ylabel('MSE')
@@ -255,20 +219,77 @@ title('Position X')
 legend(h([3]),'Minimum MSE')
 
 subplot(1,2,2)
-h(1) = plot(FitInfo_y.Lambda, FitInfo_y.MSE); 
-h(2) = semilogx(lambda, FitInfo_y.MSE, 'LineWidth', 1.5); hold on
-h(3) = semilogx(lambda, FitInfo_y.MSE, '*', 'MarkerIndices', [FitInfo_y.IndexMinMSE], ...
+h(1) = plot(lambda_range, mse_y); 
+h(2) = semilogx(lambda_range, mse_y, 'LineWidth', 1.5); hold on
+h(3) = semilogx(lambda_range, mse_y, '*', 'MarkerIndices', min_mse_idx_y, ...
     'MarkerFaceColor','red', 'MarkerSize', 10); 
 xlabel('\lambda')
 ylabel('MSE')
 title('Position Y')
 legend(h([3]),'Minimum MSE')
 
+%% Number of non-zero beta weights - TO DO AGAIN
+nz_weight=[]; %contains non-zero element for each lambda
+for i = 1:length(lambda_range)
+   nnz_el = nnz(Bx(i));
+   nz_weight = [nz_weight nnz_el];
+end
+
+figure
+plot(lambda_range, nz_weight);  
+semilogx(lambda_range, nz_weight, 'LineWidth', 1.5);
+xlabel('\lambda')
+ylabel('Number of non-zero weights')
+title('Sparsity of weights \beta')
+
+% Number of ZERO weights greatly decreases as lambda increases.
+
+
+%% Now, regress test data
+
+FM_val = Data(sep_idx_train+1:sep_idx_val,:);
+I_val = ones(size(FM_val,1),1); %not used because lasso apparently does not add one... despite what the guidesheet says?
+X_val = [I_val FM_val];
+
+x_hat_lasso = X_val * beta_x'; %regression vectors: weight for each feature for lambda yielding lowest MSE
+y_hat_lasso = X_val * beta_y';
+
+%Compute validation errors
+mse_posx_val = immse(pos_x_val, x_hat_lasso); 
+mse_posy_val = immse(pos_y_val, y_hat_lasso); 
+
+val_errors = [mse_posx_val mse_posy_val]
+
+% Validation errors
+% X: 0.0130
+% Y: 0.0379
+
+%% Now on test set - LASSO
+
+FM_test = Data(sep_idx_val+1:end,:);
+X_test = [FM_test]; %useless I know but jsut to keep same structure
+
+%Predict
+x_hat_lasso_test = X_test * beta_x'; %regression vectors: weight for each feature for lambda yielding lowest MSE
+y_hat_lasso_test = X_test * beta_y';
+
+%Compute test errors
+mse_posx_test = immse(pos_x_test, x_hat_lasso_test); 
+mse_posy_test = immse(pos_y_test, y_hat_lasso_test); 
+
+test_errors = [mse_posx_test mse_posy_test]
+
+%Test errors
+% X: 0.0121
+% Y: 0.0403 
+%Validation and test errors are roughly the same... normal ? 
+
+
 
 %% Elastic nets
 
-[Bx_en, FitInfo_x_en] = lasso(train, pos_x, 'Lambda', lambda, 'CV', k, 'Alpha', 0.5);
-[By_en, FitInfo_y_en] = lasso(train, pos_y, 'Lambda', lambda, 'CV', k, 'Alpha', 0.5);
+[Bx_en, FitInfo_x_en] = lasso(train, pos_x, 'Lambda', lambda_range, 'CV', k, 'Alpha', 0.5);
+[By_en, FitInfo_y_en] = lasso(train, pos_y, 'Lambda', lambda_range, 'CV', k, 'Alpha', 0.5);
 
 %% Number of non-zero beta weights
 nz_weight_en=[]; %contains non-zero element for each lambda
