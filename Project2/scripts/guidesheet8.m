@@ -12,6 +12,8 @@
 % -Is it normal that validation and testing errors are roughly the same ?
 %Final model:
 %How should we separate our data? (as usual: 60-30-10)?
+%Conclusion, relevant point to mention in the report:
+%PCA needed?
 
 clear all;
 close all;
@@ -271,7 +273,7 @@ legend(h([3]),'Minimum MSE')
 %% Number of non-zero beta weights
 nz_weight_en=[]; %contains non-zero element for each lambda
 for i = 1:length(lambda)
-   nnz_el = nnz(Bx(:, i));
+   nnz_el = nnz(Bx_en(:, i));
    nz_weight_en = [nz_weight_en nnz_el];
 end
 
@@ -330,16 +332,72 @@ val_errors = [mse_posx_val_en mse_posy_val_en]
 %Performance estimation?
 k = 10;
 
-alpha = 0:0.1:1;
+%Adding the L2 norm constraint
+alpha = 0.01:0.01:1; %0.01 because 'Alpha' must be in the interval (0.1]
+%Note: very long to compute, try first with 0.1 instead of 0.01
 
-optimal_lambda_x = zeros(1, length(lambda));
-optimal_lambda_y = zeros(1, length(lambda));
+optimal_lambda_x_storage = zeros(1, length(alpha)); %pour chaque alpha on aura un lambda optimal
+optimal_lambda_y_storage = zeros(1, length(alpha));
 
-for i = 1:length(lambda)
+min_MSE_x_storage = zeros(1, length(alpha));
+min_MSE_y_storage = zeros(1, length(alpha));
+
+optimal_alpha_x = 0;
+optimal_alpha_y = 0;
+
+%Number of non-zero elements
+DF_x_storage = zeros(1, length(alpha));
+DF_y_storage = zeros(1, length(alpha));
+DF_x = 0;
+DF_y = 0;
+
+for i = 1:length(alpha)
    [bx, FitInfo_x] = lasso(train, pos_x, 'Lambda', lambda, 'CV', k, 'Alpha', alpha(i)); 
    [by, FitInfo_y] = lasso(train, pos_y, 'Lambda', lambda, 'CV', k, 'Alpha', alpha(i));
    
+   %Find min MSE and the corresponding lambda
+   [min_MSE_x, min_MSE_idx] = min(FitInfo_x.MSE);
+   opt_lambda_x = FitInfo_x.Lambda(min_MSE_idx);
+   
+   optimal_lambda_x_storage = [optimal_lambda_x_storage opt_lambda_x];
+   min_MSE_x_storage = [min_MSE_x_storage min_MSE_x];
+   
+   DF_x = FitInfo_x.DF(min_MSE_idx);
+   DF_x_storage = [DF_x_storage DF_x];
+   
+   [min_MSE_y, min_MSE_idy] = min(FitInfo_y.MSE);
+   opt_lambda_y = FitInfo_y.Lambda(min_MSE_idy);
+   
+   optimal_lambda_y_storage = [optimal_lambda_y_storage opt_lambda_y];
+   min_MSE_y_storage = [min_MSE_y_storage min_MSE_y];
+   
+   DF_y = FitInfo_y.DF(min_MSE_idy);
+   DF_y_storage = [DF_y_storage DF_y];
+   
 end
 
+%Alpha optimal - Encore une fois le meilleur alpha correspon à l'erreur min
+[optimal_MSE_x, optimal_MSE_x_idx] = min(min_MSE_x_storage);
+optimal_alpha_x = alpha(optimal_MSE_x_idx);
 
+[optimal_MSE_y, optimal_MSE_y_idx] = min(min_MSE_y_storage);
+optimal_alpha_y = alpha(optimal_MSE_y_idx);
 
+%Lambda optimal
+optimal_lambda_x = optimal_lambda_x_storage(optimal_MSE_x_idx);
+optimal_lambda_y = optimal_lambda_y_storage(optimal_MSE_y_idy);
+
+%DF (number of non-zero elements) corresponfing to best alpha
+DF_x_final = DF_x_storage(optimal_MSE_x_idx);
+DF_y_final = DF_y_storage(optimal_MSE_y_idx);
+
+%Display the results
+disp(['Best MSE (x) = ', optimal_MSE_x]);
+disp(['Best \alpha (x) = ', optimal_alpha_x]);
+disp(['Best \lambda (x) = ', optimal_lambda_x]);
+disp(['Number of non-zero elements (x) = ', DF_x_final]);
+
+disp(['Best MSE (y) = ', optimal_MSE_y]);
+disp(['Best \alpha (y) = ', optimal_alpha_y]);
+disp(['Best \lambda (y) = ', optimal_lambda_y]);
+disp(['Number of non-zero elements (y) = ', DF_y_final]);
