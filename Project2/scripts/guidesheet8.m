@@ -1,6 +1,12 @@
 %% Guidesheet 8
 
 % --- Questions for TAs ---
+% -Should we do PCA ? Guidesheets seem to say so.
+% - Can we just optimize for alpha ? Also is there a lambda for elastic net
+% ? lambda * c(beta) ?
+% - Can we exclude and not try linear regression ? 
+% -Do we train with entire data set's features or should w eoptimized for n_PC? ?
+% - What we do : grid search to optimize n_PC and polynomial order. 
 %REGRESSION: 
 % -Do we train with entire data set's features?
 %LASSO:
@@ -430,7 +436,7 @@ for i = 1:length(alpha)
    DF_y_storage = [DF_y_storage DF_y];
 end
 
-%Alpha optimal - Encore une fois le meilleur alpha correspon à l'erreur min
+%Alpha optimal - Encore une fois le meilleur alpha correspon ï¿½ l'erreur min
 [optimal_MSE_x, optimal_MSE_x_idx] = min(min_MSE_x_storage);
 optimal_alpha_x = alpha(optimal_MSE_x_idx);
 
