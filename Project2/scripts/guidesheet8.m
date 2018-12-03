@@ -355,7 +355,7 @@ val_errors = [mse_posx_val_en mse_posy_val_en]
 k = 10;
 
 %Adding the L2 norm constraint
-alpha = 0.01:0.01:1; %0.01 because 'Alpha' must be in the interval (0.1]
+alpha = 0.01:0.1:1; %0.01 because 'Alpha' must be in the interval (0.1]
 %Note: very long to compute, try first with 0.1 instead of 0.01
 
 optimal_lambda_x_storage = []; %zeros(1, length(alpha)); %pour chaque alpha on aura un lambda optimal
@@ -374,15 +374,40 @@ DF_x = 0;
 DF_y = 0;
 
 for i = 1:length(alpha)
-   [bx, FitInfo_x] = lasso(train, pos_x, 'Lambda', lambda, 'CV', k, 'Alpha', alpha(i)); 
-   [by, FitInfo_y] = lasso(train, pos_y, 'Lambda', lambda, 'CV', k, 'Alpha', alpha(i));
+   [bx, FitInfo_x] = lasso(train, pos_x, 'Lambda', lambda, 'Alpha', alpha(i)); %'CV', k,
+   [by, FitInfo_y] = lasso(train, pos_y, 'Lambda', lambda, 'Alpha', alpha(i)); %'CV', k,
    
    %If we do not specify the cross-validation, we need to compute
-   %'manually' the MSE, using immse in a for loop.
+   %'manually' the MSE, using immse in a for loop with the validation set!
+   validation_error_x_storage = zeros(1, length(lambda)); %mse = validation error
+   validation_error_y_storage = zeros(1, length(lambda));
+   
+   for j = 1:length(lambda)
+       coeff_x = [FitInfo_x.Intercept(j) bx(:,j)'];
+       coeff_y = [FitInfo_y.Intercept(j) by(:,j)'];
+       
+       I_val_x = ones(size(pos_x_val, 1), 1); 
+       X_val_x = [I_val_x validation];
+       
+       I_val_y = ones(size(pos_y_val, 1), 1);
+       X_val_y = [I_val_y validation];
+       
+       mse_x = immse(pos_x_val, X_val_x * coeff_x');
+       mse_y = immse(pos_y_val, X_val_y * coeff_y');
+       
+       mse_x_storage(j) = mse_x;
+       mse_y_storage(j) = mse_y;
+   end
+   
    
    %Find min MSE and the corresponding lambda
-   [min_MSE_x, min_MSE_idx] = min(FitInfo_x.MSE);
-   opt_lambda_x = FitInfo_x.Lambda(min_MSE_idx);
+   %VERSION 1 - CV implemented in Lasso
+   %[min_MSE_x, min_MSE_idx] = min(FitInfo_x.MSE);
+   %opt_lambda_x = FitInfo_x.Lambda(min_MSE_idx);
+   
+   %VERSION 2 - Calculate MSE using immse
+   [min_MSE_x, min_MSE_idx] = min(mse_x_storage);
+   opt_lambda_x = lambda(min_MSE_idx);
    
    optimal_lambda_x_storage = [optimal_lambda_x_storage opt_lambda_x];
    min_MSE_x_storage = [min_MSE_x_storage min_MSE_x];
@@ -390,15 +415,19 @@ for i = 1:length(alpha)
    DF_x = FitInfo_x.DF(min_MSE_idx);
    DF_x_storage = [DF_x_storage DF_x];
    
-   [min_MSE_y, min_MSE_idy] = min(FitInfo_y.MSE);
-   opt_lambda_y = FitInfo_y.Lambda(min_MSE_idy);
+   %Version 1
+   %[min_MSE_y, min_MSE_idy] = min(FitInfo_y.MSE);
+   %opt_lambda_y = FitInfo_y.Lambda(min_MSE_idy);
+   
+   %Version 2
+   [min_MSE_y, min_MSE_idy] = min(mse_y_storage);
+   opt_lambda_y = lambda(min_MSE_idy);
    
    optimal_lambda_y_storage = [optimal_lambda_y_storage opt_lambda_y];
    min_MSE_y_storage = [min_MSE_y_storage min_MSE_y];
    
    DF_y = FitInfo_y.DF(min_MSE_idy);
    DF_y_storage = [DF_y_storage DF_y];
-   
 end
 
 %Alpha optimal - Encore une fois le meilleur alpha correspon à l'erreur min
@@ -443,5 +472,8 @@ figure()
 plot(alpha, optimal_lambda_x_storage);
 xlabel('\alpha');
 ylabel('\lambda');
+
+%% Performance estimation
+%Use the remaining test set!
 
 
