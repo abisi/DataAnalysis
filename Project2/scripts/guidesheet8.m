@@ -14,6 +14,7 @@
 %How should we separate our data? (as usual: 60-30-10)?
 %Conclusion, relevant point to mention in the report:
 %PCA needed?
+%What about the cross-validation in the lasso? (for elastic nets)
 
 clear all;
 close all;
@@ -357,24 +358,27 @@ k = 10;
 alpha = 0.01:0.01:1; %0.01 because 'Alpha' must be in the interval (0.1]
 %Note: very long to compute, try first with 0.1 instead of 0.01
 
-optimal_lambda_x_storage = zeros(1, length(alpha)); %pour chaque alpha on aura un lambda optimal
-optimal_lambda_y_storage = zeros(1, length(alpha));
+optimal_lambda_x_storage = []; %zeros(1, length(alpha)); %pour chaque alpha on aura un lambda optimal
+optimal_lambda_y_storage = []; %zeros(1, length(alpha));
 
-min_MSE_x_storage = zeros(1, length(alpha));
-min_MSE_y_storage = zeros(1, length(alpha));
+min_MSE_x_storage = []; %zeros(1, length(alpha));
+min_MSE_y_storage = []; %zeros(1, length(alpha));
 
 optimal_alpha_x = 0;
 optimal_alpha_y = 0;
 
 %Number of non-zero elements
-DF_x_storage = zeros(1, length(alpha));
-DF_y_storage = zeros(1, length(alpha));
+DF_x_storage = []; %zeros(1, length(alpha));
+DF_y_storage = []; %zeros(1, length(alpha));
 DF_x = 0;
 DF_y = 0;
 
 for i = 1:length(alpha)
    [bx, FitInfo_x] = lasso(train, pos_x, 'Lambda', lambda, 'CV', k, 'Alpha', alpha(i)); 
    [by, FitInfo_y] = lasso(train, pos_y, 'Lambda', lambda, 'CV', k, 'Alpha', alpha(i));
+   
+   %If we do not specify the cross-validation, we need to compute
+   %'manually' the MSE, using immse in a for loop.
    
    %Find min MSE and the corresponding lambda
    [min_MSE_x, min_MSE_idx] = min(FitInfo_x.MSE);
@@ -406,19 +410,38 @@ optimal_alpha_y = alpha(optimal_MSE_y_idx);
 
 %Lambda optimal
 optimal_lambda_x = optimal_lambda_x_storage(optimal_MSE_x_idx);
-optimal_lambda_y = optimal_lambda_y_storage(optimal_MSE_y_idy);
+optimal_lambda_y = optimal_lambda_y_storage(optimal_MSE_y_idx);
 
 %DF (number of non-zero elements) corresponfing to best alpha
 DF_x_final = DF_x_storage(optimal_MSE_x_idx);
 DF_y_final = DF_y_storage(optimal_MSE_y_idx);
 
 %Display the results
-disp(['Best MSE (x) = ', optimal_MSE_x]);
-disp(['Best \alpha (x) = ', optimal_alpha_x]);
-disp(['Best \lambda (x) = ', optimal_lambda_x]);
-disp(['Number of non-zero elements (x) = ', DF_x_final]);
+disp(['Best MSE (x) = ', num2str(optimal_MSE_x)]);
+disp(['Best alpha (x) = ', num2str(optimal_alpha_x)]);
+disp(['Best lambda (x) = ', num2str(optimal_lambda_x)]);
+disp(['Number of non-zero elements (x) = ', num2str(DF_x_final)]);
 
-disp(['Best MSE (y) = ', optimal_MSE_y]);
-disp(['Best \alpha (y) = ', optimal_alpha_y]);
-disp(['Best \lambda (y) = ', optimal_lambda_y]);
-disp(['Number of non-zero elements (y) = ', DF_y_final]);
+disp(['Best MSE (y) = ', num2str(optimal_MSE_y)]);
+disp(['Best alpha (y) = ', num2str(optimal_alpha_y)]);
+disp(['Best lambda (y) = ', num2str(optimal_lambda_y)]);
+disp(['Number of non-zero elements (y) = ', num2str(DF_y_final)]);
+
+%% Plot results
+
+figure()
+plot(alpha, min_MSE_x_storage);
+xlabel('\alpha');
+ylabel('MSE');
+
+figure()
+plot(alpha, DF_x_storage);
+xlabel('\alpha');
+ylabel('Non-zero elements');
+
+figure()
+plot(alpha, optimal_lambda_x_storage);
+xlabel('\alpha');
+ylabel('\lambda');
+
+
