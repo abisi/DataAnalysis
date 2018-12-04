@@ -162,7 +162,7 @@ title('Predicted and real movements of monkey''s wrist - train test')
 
 %Test X and Y
 figure
-plot(x_hat_2_te, y_hat_2_te); hold on
+plot(x_hat_te_2, y_hat_te_2); hold on
 plot(target_posx_test, target_posy_test); hold off
 xlabel('Position X')
 ylabel('Position Y')
