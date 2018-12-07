@@ -22,7 +22,7 @@ load('../data/Data.mat');
 %% Data set partitioning and PCA 
 %Partition
 train_proportion = 0.7;     
-rows = size(Data,1); %12862
+rows = size(Data,1); 
 sep_idx = round(rows*train_proportion);
 
 train = Data(1:sep_idx,:);
@@ -35,7 +35,7 @@ std_test = (test - mu ) ./ sigma;
 [coeff, score, latent] = pca(std_train);
 
 pca_train = std_train * coeff;
-pca_test = std_test * coeff; %using same coefficients
+pca_test = std_test * coeff; 
 
 %% Regression - linear
 nPCs = 741;  %for 90% total variance
@@ -76,7 +76,7 @@ plot(PosX, 'Linewidth', 1); hold on;
 plot(regressed_x, 'LineWidth', 1); hold off;
 xlabel('Time [ms]');
 ylabel('X');
-axis([8500 9500 -0.05 0.18]); %2000-2500 vs -0.05 0.18
+%axis([8500 9500 -0.05 0.18]); %2000-2500 vs -0.05 0.18
 x = [sep_idx sep_idx];
 y = [-1 1];
 line(x, y, 'Color', 'black', 'LineStyle', '--')
@@ -89,15 +89,15 @@ plot(regressed_y, 'LineWidth', 1); hold off;
 xlabel('Time [ms]');
 ylabel('Y');
 %title('');
-axis([8500 9500 0.1 0.33]); %2000-2500 vs -0.05 0.18
+%axis([8500 9500 0.1 0.33]); %2000-2500 vs -0.05 0.18
 line(x, y, 'Color', 'black', 'LineStyle', '--')
 legend('Observed', 'Predicted', 'Train/Test separation');
 
 %% Display MSE
-disp(['MSE train (Position X) = ', num2str(mse_pos_x)]);
-disp(['MSE train (Position Y) = ', num2str(mse_pos_y)]);
-disp(['MSE test (Position X) = ', num2str(mse_posx_test)]);
-disp(['MSE test (Position Y) = ', num2str(mse_posy_test)]);
+disp(['Linear regression: MSE train (Position X) = ', num2str(mse_pos_x)]);
+disp(['Linear regression: MSE train (Position Y) = ', num2str(mse_pos_y)]);
+disp(['Linear regression: MSE test (Position X) = ', num2str(mse_posx_test)]);
+disp(['Linear regression: MSE test (Position Y) = ', num2str(mse_posy_test)]);
 
 %% Standard Linear regression with PCA
 % nPCs = 741;
@@ -123,13 +123,137 @@ disp(['MSE test (Position Y) = ', num2str(mse_posy_test)]);
 % axis([2000 2500 -0.05 0.15]);
 
 
-
-
-
 %% Lasso / Elastic Nets
-lambda = 10e-4;
-nPCs_x = 300;
-nPCs_y = 290;
+%% Clean variables
+clear all;
+close all;
+load('../data/Data.mat');
+
+%% Data partiotionning
+%Partition
+train_proportion = 0.7;     
+rows = size(Data,1); 
+sep_idx = round(rows*train_proportion);
+
+train = Data(1:sep_idx,:);
+test = Data(sep_idx+1:end,:); 
+
+pos_x_train = PosX(1:sep_idx); 
+pos_y_train = PosY(1:sep_idx); 
+
+pos_x_test = PosX(sep_idx+1:end); 
+pos_y_test = PosY(sep_idx+1:end);
+
+%Standardization
+[std_train, mu, sigma] = zscore(train); 
+std_test = (test - mu ) ./ sigma; 
+
+%PCA
+[coeff, score, latent] = pca(std_train);
+
+pca_train = std_train * coeff;
+pca_test = std_test * coeff;
+
+%%
+lambda = 2.68e-4;
+alpha = 1;
+nPCs = 300;
+    
+%Train
+FM_train = X_train(:, 1:nPCs);
+I_train = ones(size(FM_train, 1), 1); 
+X_train = [I_train pca_train]; %nPCs ??
+
+
+%Test
+FM_test = X_test(:, 1:nPCs);
+I_test = ones(size(FM_test, 1), 1); 
+X_test = [I_test pca_test];
+
+[bx, FitInfox] = lasso(pca_train, pos_x_train, 'Lambda', lambda, 'Alpha', alpha);
+[by, FitInfoy] = lasso(pca_train, pos_y_train, 'Lambda', lambda, 'Alpha', alpha);
+
+coeff_x = [FitInfox.Intercept bx'];
+coeff_y = [FitInfoy.Intercept by'];
+
+x_hat_train = X_train * coeff_x';
+y_hat_train = X_train * coeff_y';
+
+
+x_hat_test = X_test * coeff_x';
+y_hat_test = X_test * coeff_y';
+
+%Train error
+mse_x_train = immse(pos_x_train, x_hat_train);
+mse_y_train = immse(pos_x_train, y_hat_train);
+    
+%Test error
+mse_x_test = immse(pos_x_test, x_hat_test);
+mse_y_test = immse(pos_x_test, y_hat_test);
+
+
+%Prediction X
+% FM_x = [score(:,1:nPCs_x)];
+% I_x = ones(size(FM_x,1),1);
+% X_x = [I_x FM_x];
+% 
+% Bx = [FitInfox.Intercept bx'];
+% 
+% x_hat = X_x * Bx';
+% 
+% %Prediction Y
+% FM_y = [score(:,1:nPCs_y)];
+% I_y = ones(size(FM_y,1),1);
+% X_y = [I_y FM_y];
+% 
+% By = [FitInfoy.Intercept by'];
+% 
+% y_hat = X_y * By';
+
+%% Plot PosX
+% figure
+% plot(PosX, 'LineWidth', 1.5); hold on;
+% plot(x_hat, 'LineWidth', 1.5);
+% xlabel('Time [ms]');
+% ylabel('Position X');
+% legend('Observed', 'Predicted');
+% axis([2000 2500 -0.05 0.15]);
+% title('Observed and predicted X position - Lasso with PCA');
+
+%% Lasso / Elastic Nets - Plot results
+regressed_x = [x_hat_train; x_hat_test];
+regressed_y = [y_hat_train; y_hat_test];
+
+figure
+subplot(2,1,1)
+plot(PosX, 'LineWidth', 1.5); hold on;
+plot(regressed_x, 'LineWidth', 1.5);
+xlabel('Time [ms]');
+ylabel('Position X');
+legend('Observed', 'Predicted');
+axis([8500 9500 -0.05 0.15]);
+title('Observed and predicted X position - Elastic Nets with PCA (\alpha = ...');
+
+subplot(2,1,2);
+plot(PosY, 'LineWidth', 1.5); hold on;
+plot(regressed_y, 'LineWidth', 1.5);
+xlabel('Time [ms]');
+ylabel('Position Y');
+legend('Observed', 'Predicted');
+axis([8500 9500 0.15 0.28]);
+title('Observed and predicted Y position - Elastic Nets with PCA (\alpha = ...');
+
+%% Display results
+disp(['EN/Lasso: MSE train (Position X) (\alpha = ', num2str(alpha), ') = ', num2str(mse_x_train)]);
+disp(['EN/Lasso: MSE train (Position Y) (\alpha = ', num2str(alpha), ') = ', num2str(mse_y_train)]);
+disp(['EN/Lasso: MSE test (Position X) (\alpha = ', num2str(alpha), ') = ', num2str(mse_x_test)]);
+disp(['EN/Lasso: MSE test (Position Y) (\alpha = ', num2str(alpha), ') = ', num2str(mse_y_test)]);
+
+%% Elastic Nets with PCA
+lambda = 2.68e-4;
+alpha = 0.57;
+nPCs = 300;
+
 %Standardization
 [std_Data, mu, sigma] = zscore(Data);
 %PCA
@@ -154,36 +278,6 @@ X_y = [I_y FM_y];
 By = [FitInfoy.Intercept by'];
 
 y_hat = X_y * By';
-
-%% Plot PosX
-figure
-plot(PosX, 'LineWidth', 1.5); hold on;
-plot(x_hat, 'LineWidth', 1.5);
-xlabel('Time [ms]');
-ylabel('Position X');
-legend('Observed', 'Predicted');
-axis([2000 2500 -0.05 0.15]);
-title('Observed and predicted X position - Lasso with PCA');
-
-%% Lasso - Plot results
-figure
-subplot(2,1,1)
-plot(PosX, 'LineWidth', 1.5); hold on;
-plot(x_hat, 'LineWidth', 1.5);
-xlabel('Time [ms]');
-ylabel('Position X');
-legend('Observed', 'Predicted');
-axis([2000 2500 -0.05 0.15]);
-title('Observed and predicted X position - Lasso with PCA');
-
-subplot(2,1,2);
-plot(PosY, 'LineWidth', 1.5); hold on;
-plot(y_hat, 'LineWidth', 1.5);
-xlabel('Time [ms]');
-ylabel('Position Y');
-legend('Observed', 'Predicted');
-axis([2000 2500 0.15 0.28]);
-title('Observed and predicted Y position - Lasso with PCA');
 
 
 %%
