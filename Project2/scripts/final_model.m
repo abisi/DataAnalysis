@@ -5,10 +5,10 @@
 %alpha. Optimal number of features.
 %
 %STANDARD LINEAR REGRESSION
-%Number of features with PCA: 690 (corresponding to 90% variance)
+%Number of features with PCA: 741 (corresponding to 90% variance)
 %
 %LASSO / ELASTIC NETS
-%Number of features with PCA: ?
+%Number of features with PCA: 350
 %lambda = 2.683e-4; 
 %alpha = 0.58;
 
@@ -18,7 +18,6 @@ close all;
 load('../data/Data.mat');
 
 %% Standard Linear regression with PCA
-
 %% Data set partitioning and PCA 
 %Partition
 train_proportion = 0.7;     
@@ -66,7 +65,7 @@ y_hat_test = X_test * by;
 mse_posx_test = immse(pos_x_test, x_hat_test);
 mse_posy_test = immse(pos_y_test, y_hat_test);
 
-%% Plot
+%% Plot - Linear regression
 regressed_x = [x_hat; x_hat_test];
 regressed_y = [y_hat; y_hat_test];
 
@@ -76,11 +75,12 @@ plot(PosX, 'Linewidth', 1); hold on;
 plot(regressed_x, 'LineWidth', 1); hold off;
 xlabel('Time [ms]');
 ylabel('X');
-%axis([8500 9500 -0.05 0.18]); %2000-2500 vs -0.05 0.18
+axis([8500 9500 -0.05 0.18]); %2000-2500 vs -0.05 0.18
 x = [sep_idx sep_idx];
 y = [-1 1];
 line(x, y, 'Color', 'black', 'LineStyle', '--')
 legend('Observed', 'Predicted', 'Train/Test separation');
+title('Linear regression with PCA - Position X');
 
 %Y motion
 subplot(2,1,2)
@@ -88,40 +88,20 @@ plot(PosY, 'LineWidth', 1); hold on;
 plot(regressed_y, 'LineWidth', 1); hold off;
 xlabel('Time [ms]');
 ylabel('Y');
-%title('');
-%axis([8500 9500 0.1 0.33]); %2000-2500 vs -0.05 0.18
+axis([8500 9500 0.1 0.33]); %2000-2500 vs -0.05 0.18
 line(x, y, 'Color', 'black', 'LineStyle', '--')
 legend('Observed', 'Predicted', 'Train/Test separation');
+title('Linear regression with PCA - Position Y');
+
+%% Stock variables for final graph
+regressed_x_linear = regressed_x;
+regressed_y_linear = regressed_y;
 
 %% Display MSE
 disp(['Linear regression: MSE train (Position X) = ', num2str(mse_pos_x)]);
 disp(['Linear regression: MSE train (Position Y) = ', num2str(mse_pos_y)]);
 disp(['Linear regression: MSE test (Position X) = ', num2str(mse_posx_test)]);
 disp(['Linear regression: MSE test (Position Y) = ', num2str(mse_posy_test)]);
-
-%% Standard Linear regression with PCA
-% nPCs = 741;
-% %Standardization
-% std_Data = zscore(Data);
-% %PCA
-% [coeff, score, latent] = pca(std_Data);
-% %Regression
-% bx = regress(PosX, score);
-% 
-% FM_x = score(:,1:nPCs); % training feature matrix
-% I_x = ones(size(FM_x,1),1); % X should include a column of ones so that the model contains a constant term
-% X_x = [I_x FM_x];
-% 
-% x_hat = X_x * bx;
-
-%% Plot results - Standard Linear Regression
-% figure
-% plot(PosX, 'LineWidth', 1.5); hold on;
-% plot(x_hat, 'LineWidth', 1.5);
-% xlabel('Time [ms]');
-% ylabel('Position X');
-% axis([2000 2500 -0.05 0.15]);
-
 
 %% Lasso / Elastic Nets
 %% Clean variables
@@ -154,71 +134,42 @@ std_test = (test - mu ) ./ sigma;
 pca_train = std_train * coeff;
 pca_test = std_test * coeff;
 
-%%
+%% Regularized regression
 lambda = 2.68e-4;
-alpha = 1;
-nPCs = 300;
-    
-%Train
-FM_train = X_train(:, 1:nPCs);
-I_train = ones(size(FM_train, 1), 1); 
-X_train = [I_train pca_train]; %nPCs ??
+alpha = 0.57;
+nPCs = 350;
 
-
-%Test
-FM_test = X_test(:, 1:nPCs);
-I_test = ones(size(FM_test, 1), 1); 
-X_test = [I_test pca_test];
-
-[bx, FitInfox] = lasso(pca_train, pos_x_train, 'Lambda', lambda, 'Alpha', alpha);
-[by, FitInfoy] = lasso(pca_train, pos_y_train, 'Lambda', lambda, 'Alpha', alpha);
+[bx, FitInfox] = lasso(pca_train(:, 1:nPCs), pos_x_train, 'Lambda', lambda, 'Alpha', alpha);
+[by, FitInfoy] = lasso(pca_train(:, 1:nPCs), pos_y_train, 'Lambda', lambda, 'Alpha', alpha);
 
 coeff_x = [FitInfox.Intercept bx'];
 coeff_y = [FitInfoy.Intercept by'];
 
+%Train
+FM_train = pca_train(:, 1:nPCs);
+I_train = ones(size(FM_train, 1), 1); 
+X_train = [I_train FM_train]; 
+
+%Test
+FM_test = pca_test(:, 1:nPCs); 
+I_test = ones(size(FM_test, 1), 1); 
+X_test = [I_test FM_test];
+
 x_hat_train = X_train * coeff_x';
 y_hat_train = X_train * coeff_y';
-
 
 x_hat_test = X_test * coeff_x';
 y_hat_test = X_test * coeff_y';
 
 %Train error
 mse_x_train = immse(pos_x_train, x_hat_train);
-mse_y_train = immse(pos_x_train, y_hat_train);
+mse_y_train = immse(pos_y_train, y_hat_train);
     
 %Test error
 mse_x_test = immse(pos_x_test, x_hat_test);
-mse_y_test = immse(pos_x_test, y_hat_test);
+mse_y_test = immse(pos_y_test, y_hat_test);
 
 
-%Prediction X
-% FM_x = [score(:,1:nPCs_x)];
-% I_x = ones(size(FM_x,1),1);
-% X_x = [I_x FM_x];
-% 
-% Bx = [FitInfox.Intercept bx'];
-% 
-% x_hat = X_x * Bx';
-% 
-% %Prediction Y
-% FM_y = [score(:,1:nPCs_y)];
-% I_y = ones(size(FM_y,1),1);
-% X_y = [I_y FM_y];
-% 
-% By = [FitInfoy.Intercept by'];
-% 
-% y_hat = X_y * By';
-
-%% Plot PosX
-% figure
-% plot(PosX, 'LineWidth', 1.5); hold on;
-% plot(x_hat, 'LineWidth', 1.5);
-% xlabel('Time [ms]');
-% ylabel('Position X');
-% legend('Observed', 'Predicted');
-% axis([2000 2500 -0.05 0.15]);
-% title('Observed and predicted X position - Lasso with PCA');
 
 %% Lasso / Elastic Nets - Plot results
 regressed_x = [x_hat_train; x_hat_test];
@@ -230,62 +181,75 @@ plot(PosX, 'LineWidth', 1.5); hold on;
 plot(regressed_x, 'LineWidth', 1.5);
 xlabel('Time [ms]');
 ylabel('Position X');
-legend('Observed', 'Predicted');
-axis([8500 9500 -0.05 0.15]);
-title('Observed and predicted X position - Elastic Nets with PCA (\alpha = ...');
+a = [sep_idx sep_idx];
+b = [-1 1];
+line(a, b, 'Color', 'black', 'LineStyle', '--')
+legend('Observed', 'Predicted', 'Train/Test separation');
+axis([8500 9500 -0.05 0.18]);
+title(['Elastic Nets with PCA (\alpha = ', num2str(alpha), ')', ' - Position X']);
 
 subplot(2,1,2);
 plot(PosY, 'LineWidth', 1.5); hold on;
 plot(regressed_y, 'LineWidth', 1.5);
 xlabel('Time [ms]');
 ylabel('Position Y');
-legend('Observed', 'Predicted');
-axis([8500 9500 0.15 0.28]);
-title('Observed and predicted Y position - Elastic Nets with PCA (\alpha = ...');
+line(a, b, 'Color', 'black', 'LineStyle', '--')
+legend('Observed', 'Predicted', 'Train/Test separation');
+axis([8500 9500 0.15 0.30]);
+title(['Elastic Nets with PCA (\alpha = ', num2str(alpha), ')', ' - Position Y']);
+
+%% Stock variables for final graph
+regressed_x_en = regressed_x;
+regressed_y_en = regressed_y;
 
 %% Display results
-disp(['EN/Lasso: MSE train (Position X) (\alpha = ', num2str(alpha), ') = ', num2str(mse_x_train)]);
-disp(['EN/Lasso: MSE train (Position Y) (\alpha = ', num2str(alpha), ') = ', num2str(mse_y_train)]);
-disp(['EN/Lasso: MSE test (Position X) (\alpha = ', num2str(alpha), ') = ', num2str(mse_x_test)]);
-disp(['EN/Lasso: MSE test (Position Y) (\alpha = ', num2str(alpha), ') = ', num2str(mse_y_test)]);
+disp(['EN/Lasso: MSE train (Position X) (alpha = ', num2str(alpha), ') = ', num2str(mse_x_train)]);
+disp(['EN/Lasso: MSE train (Position Y) (alpha = ', num2str(alpha), ') = ', num2str(mse_y_train)]);
+disp(['EN/Lasso: MSE test (Position X) (alpha = ', num2str(alpha), ') = ', num2str(mse_x_test)]);
+disp(['EN/Lasso: MSE test (Position Y) (alpha = ', num2str(alpha), ') = ', num2str(mse_y_test)]);
 
-%% Elastic Nets with PCA
-lambda = 2.68e-4;
-alpha = 0.57;
-nPCs = 300;
-
-%Standardization
-[std_Data, mu, sigma] = zscore(Data);
-%PCA
-[coeff, score, latent] = pca(std_Data);
-%Lasso
-[bx, FitInfox] = lasso(score(:, 1:nPCs_x), PosX, 'Lambda', lambda);
-[by, FitInfoy] = lasso(score(:, 1:nPCs_y), PosY, 'Lambda', lambda);
-%Prediction X
-FM_x = [score(:,1:nPCs_x)];
-I_x = ones(size(FM_x,1),1);
-X_x = [I_x FM_x];
-
-Bx = [FitInfox.Intercept bx'];
-
-x_hat = X_x * Bx';
-
-%Prediction Y
-FM_y = [score(:,1:nPCs_y)];
-I_y = ones(size(FM_y,1),1);
-X_y = [I_y FM_y];
-
-By = [FitInfoy.Intercept by'];
-
-y_hat = X_y * By';
-
-
-%%
-%+ test + error
-%Check MSE
-%Separate train and test set (70% - 30%)
-%For EN > test error 70-30
-
-
-
+%% Final graph
+% a = [sep_idx sep_idx];
+% b = [-1 1];
+% 
+% figure
+% subplot(2,2,1)
+% plot(PosX, 'LineWidth', 1.5); hold on;
+% plot(regressed_x_linear, 'LineWidth', 1.5);
+% xlabel('Time [ms]');
+% ylabel('Position X');
+% line(a, b, 'Color', 'black', 'LineStyle', '--'); hold off;
+% legend('Observed', 'Predicted', 'Train/Test separation');
+% axis([8500 9500 0 0.18]);
+% title('Linear regression with PCA - Position X');
+% 
+% subplot(2,2,2)
+% plot(PosX, 'LineWidth', 1.5); hold on;
+% plot(regressed_y_linear, 'LineWidth', 1.5);
+% xlabel('Time [ms]');
+% ylabel('Position Y');
+% line(a, b, 'Color', 'black', 'LineStyle', '--'); hold off;
+% legend('Observed', 'Predicted', 'Train/Test separation');
+% axis([8500 9500 0 0.18]);
+% title('Linear regression with PCA - Position Y');
+% 
+% subplot(2,2,3);
+% plot(PosX, 'LineWidth', 1.5); hold on;
+% plot(regressed_x_en, 'LineWidth', 1.5);
+% xlabel('Time [ms]');
+% ylabel('Position X');
+% line(a, b, 'Color', 'black', 'LineStyle', '--'); hold off;
+% legend('Observed', 'Predicted', 'Train/Test separation');
+% axis([8500 9500 0.15 0.28]);
+% title(['Elastic Nets with PCA (\alpha = ', num2str(alpha), ')', ' - Position X']);
+% 
+% subplot(2,2,4);
+% plot(PosY, 'LineWidth', 1.5); hold on;
+% plot(regressed_y_en, 'LineWidth', 1.5);
+% xlabel('Time [ms]');
+% ylabel('Position Y');
+% line(a, b, 'Color', 'black', 'LineStyle', '--'); hold off;
+% legend('Observed', 'Predicted', 'Train/Test separation');
+% axis([8500 9500 0.15 0.28]);
+% title(['Elastic Nets with PCA (\alpha = ', num2str(alpha), ')', ' - Position Y']);
 
