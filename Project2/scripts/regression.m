@@ -13,6 +13,13 @@ sep_idx = round(rows*proportion);
 train = Data(1:sep_idx,:);
 test = Data(sep_idx:end,:); %here we keep order because we wanna predict future values based on past values
 
+%Targets
+target_posx = PosX(1:sep_idx); % x position targets
+target_posy = PosY(1:sep_idx); % y position 
+target_posx_te = PosX(sep_idx:end); 
+target_posy_te = PosY(sep_idx:end);
+
+
 %Stdize
 [std_train, mu, sigma] = zscore(train); 
 std_test = (test - mu ) ./ sigma; %using same normalization coefficients 
@@ -36,11 +43,8 @@ pc90=num_PC(idx90(1));
 threshold90=line([pc90 pc90], [0 1]);
 set(threshold90,'LineWidth',2,'color','blue');
 
-chosen_PCs = pc90;
+chosen_PCs = 400;
 
-%Train
-target_posx = PosX(1:sep_idx); % x position reg. targets
-target_posy = PosY(1:sep_idx); % y position reg. targets
 FM_train = pca_train(:,1:chosen_PCs); % training feature matrix
 I_train = ones(size(FM_train,1),1); % X should include a column of ones so that the model contains a constant term
 X_train = [I_train FM_train];
@@ -53,9 +57,6 @@ y_hat = X_train * by;
 mse_posx = immse(target_posx, x_hat); %mse
 mse_posy = immse(target_posy, y_hat);
 
-%Test
-target_posx_te = PosX(sep_idx:end); 
-target_posy_te = PosY(sep_idx:end);
 FM_test = pca_test(:,1:chosen_PCs);
 I_test = ones(size(FM_test,1),1);
 X_test = [I_test FM_test];
@@ -303,8 +304,8 @@ errors = [errors ; order_errors_x order_errors_y order_errors_x_te order_errors_
 figure
 %X test
 subplot(1,2,1)
-plot(model_orders, errors(1:5,3), 'LineWidth', 1.5); hold on %PCA
-plot(model_orders, errors(6:10,3), 'LineWidth', 1.5); hold off %PCA
+plot(model_orders, errors(1:5,3), 'LineWidth', 1.5); hold on 
+plot(model_orders, errors(6:10,3), 'LineWidth', 1.5); hold off 
 xlabel('Model order');
 ylabel('MSE');
 legend('With PCA', 'Without PCA');
@@ -312,8 +313,8 @@ title('PosX testing');
 
 %Y test
 subplot(1,2,2)
-plot(model_orders, errors(1:5,4), 'LineWidth', 1.5); hold on %PCA
-plot(model_orders, errors(6:10,4), 'LineWidth', 1.5); hold off %PCA
+plot(model_orders, errors(1:5,4), 'LineWidth', 1.5); hold on 
+plot(model_orders, errors(6:10,4), 'LineWidth', 1.5); hold off 
 xlabel('Model order');
 ylabel('MSE');
 legend('With PCA', 'Without PCA');

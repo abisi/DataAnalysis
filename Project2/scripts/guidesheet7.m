@@ -172,14 +172,14 @@ title('Predicted and real movements of monkey''s wrist - test test')
 
 %% Gradually include features
 
-n_PCs = size(pca_train,2);
+n_PCs = size(std_train,2);
 
-FM_train = pca_train;
+FM_train = std_train;
 I_train = ones(size(FM_train,1),1);
 X_train = [I_train FM_train];
 X_train_2 = [I_train FM_train.^2];
 
-FM_test = pca_test;
+FM_test = std_test;
 I_test = ones(size(FM_test,1),1);
 X_test = [I_test FM_test];
 X_test_2 = [I_test FM_test FM_test.^2];
@@ -238,7 +238,7 @@ figure;
 subplot(2,2,1) 
 plot(x, error_x(x), '.'); hold on
 plot(x, error_x_te(x), '.'); 
-xlabel('Number of PCs');
+xlabel('Number of features');
 ylabel('MSE');
 title('Linearly regressed PosX ');
 legend('Training error','Testing error');
@@ -246,7 +246,7 @@ legend('Training error','Testing error');
 subplot(2,2,2)
 plot(x, error_y(x), '.'); hold on
 plot(x, error_y_te(x), '.');  
-xlabel('Number of PCs');
+xlabel('Number of features');
 ylabel('MSE');
 title('Linearly regressed PosY');
 legend('Training error','Testing error');
@@ -255,7 +255,7 @@ legend('Training error','Testing error');
 subplot(2,2,3)
 plot(x, error_x_2(x), '.'); hold on
 plot(x, error_x_2_te(x), '.');  
-xlabel('Number of PCs');
+xlabel('Number of features');
 ylabel('MSE');
 title('Polynomial regression of PosX ');
 legend('Training error','Testing error');
@@ -264,7 +264,7 @@ legend('Training error','Testing error');
 subplot(2,2,4)
 plot(x, error_y_2(x), '.'); hold on
 plot(x, error_y_2_te(x), '.');
-xlabel('Number of PCs');
+xlabel('Number of features');
 ylabel('MSE');
 title('Polynomial regression of PosY ');
 legend('Training error','Testing error');

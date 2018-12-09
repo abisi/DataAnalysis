@@ -108,7 +108,6 @@ s1 = surf(x, degrees, mse_poly_x(degrees,x)); hold on
 s1_te = surf(x, degrees, mse_poly_x_te(degrees,x)); 
 %s1.EdgeColor = 'none';
 %s1_te.EdgeColor = 'none';
-
 xlabel('Number of PCs');
 ylabel('Polynomial degree');
 zlabel('MSE');

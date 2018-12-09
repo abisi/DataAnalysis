@@ -52,7 +52,7 @@ mse_posy = immse(target_posy, y_hat);
 mse_posx_te = immse(target_posx_te, x_hat_te);
 mse_posy_te = immse(target_posy_te, y_hat_te);
 errors_linear_n = [mse_posx, mse_posy, mse_posx_te, mse_posy_te];
-errors_linear_rmse = sqrt(errors_linear);
+%errors_linear_rmse = sqrt(errors_linear);
 figure
 bar(errors_linear_n);
 
@@ -164,59 +164,59 @@ figure
 subplot(3,2,1)
 plot(PosX, 'LineWidth', 1.5); hold on; %'Color', c1
 plot(regressed_x_linear, 'LineWidth', 1.5); %'Color', c2
-xlabel('Time [ms]');
-ylabel('Position X');
+xlabel('Time [ms]', 'FontSize', 14);
+ylabel('PosX', 'FontSize', 14);
 line(a, b, 'Color', 'black', 'LineStyle', '--'); hold off;
-legend('Observed', 'Predicted', 'Train/Test separation');
+legend('Target', 'Predicted', 'Train/Test separation');
 axis([8700 9100 0 0.18]);
-title('\fontsize{14} Linear regression w/o PCA - Position X'); %\fontsize{14}
+title('\fontsize{15} Linear regression w/o PCA - PosX'); %\fontsize{14}
 
 subplot(3,2,2)
 plot(PosY, 'LineWidth', 1.5); hold on;
 plot(regressed_y_linear, 'LineWidth', 1.5);
-xlabel('Time [ms]');
-ylabel('Position Y');
+xlabel('Time [ms]', 'FontSize', 14);
+ylabel('PosY', 'FontSize', 14);
 line(a, b, 'Color', 'black', 'LineStyle', '--'); hold off;
-legend('Observed', 'Predicted', 'Train/Test separation');
+legend('Target', 'Predicted', 'Train/Test separation');
 axis([8700 9100 0.15 0.30]);
-title('\fontsize{14} Linear regression w/o PCA - Position Y');
+title('\fontsize{15} Linear regression w/o PCA - PosY');
 
 subplot(3,2,3);
 plot(PosX, 'LineWidth', 1.5); hold on;
 plot(regressed_x_linear_2, 'LineWidth', 1.5);
-xlabel('Time [ms]');
-ylabel('Position X');
+xlabel('Time [ms]', 'FontSize', 14);
+ylabel('PosX', 'FontSize', 14);
 line(a, b, 'Color', 'black', 'LineStyle', '--'); hold off;
-legend('Observed', 'Predicted', 'Train/Test separation');
+legend('Target', 'Predicted', 'Train/Test separation');
 axis([8700 9100 0 0.18]);
-title(['\fontsize{14} Polynomial regression (\it{i=2}) w/o PCA (\alpha = ', num2str(alpha), ')', ' - Position X']);
+title(['\fontsize{15} Polynomial regression (i=2) w/o PCA', ' - PosX']);
 
 subplot(3,2,4);
 plot(PosY, 'LineWidth', 1.5); hold on;
 plot(regressed_y_linear_2, 'LineWidth', 1.5);
-xlabel('Time [ms]');
-ylabel('Position Y');
+xlabel('Time [ms]', 'FontSize', 14);
+ylabel('PosY', 'FontSize', 14);
 line(a, b, 'Color', 'black', 'LineStyle', '--'); hold off;
-legend('Observed', 'Predicted', 'Train/Test separation');
+legend('Target', 'Predicted', 'Train/Test separation');
 axis([8700 9100 0.15 0.30]);
-title(['\fontsize{14} Polynomial regression (\it{i=2}) w/o PCA (\alpha = ', num2str(alpha), ')', ' - Position Y']);
+title(['\fontsize{15} Polynomial regression (i=2) w/o PCA', ' - PosY']);
 
 subplot(3,2,5);
 plot(PosX, 'LineWidth', 1.5); hold on;
 plot(regressed_x_en, 'LineWidth', 1.5);
-xlabel('Time [ms]');
-ylabel('Position X');
+xlabel('Time [ms]', 'FontSize', 14);
+ylabel('PosX', 'FontSize', 14);
 line(a, b, 'Color', 'black', 'LineStyle', '--'); hold off;
-legend('Observed', 'Predicted', 'Train/Test separation');
+legend('Target', 'Predicted', 'Train/Test separation');
 axis([8700 9100 0 0.18]);
-title(['\fontsize{14} Elastic Net with PCA (\alpha = ', num2str(alpha), ')', ' - Position X']);
+title(['\fontsize{15} Elastic Net with PCA (\alpha = ', num2str(alpha), ')', ' - PosX']);
 
 subplot(3,2,6);
 plot(PosY, 'LineWidth', 1.5); hold on;
 plot(regressed_y_en, 'LineWidth', 1.5);
-xlabel('Time [ms]');
-ylabel('Position Y');
+xlabel('Time [ms]', 'FontSize', 14);
+ylabel('PosY', 'FontSize', 14);
 line(a, b, 'Color', 'black', 'LineStyle', '--'); hold off;
-legend('Observed', 'Predicted', 'Train/Test separation');
+legend('Target', 'Predicted', 'Train/Test separation');
 axis([8700 9100 0.15 0.30]);
-title(['\fontsize{14} Elastic Net with PCA (\alpha = ', num2str(alpha), ')', ' - Position Y']);
+title(['\fontsize{15} Elastic Net with PCA (\alpha = ', num2str(alpha), ')', ' - PosY']);
